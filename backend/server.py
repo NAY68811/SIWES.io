@@ -778,6 +778,16 @@ async def report_summary(user: dict = Depends(require_roles("coordinator", "admi
 async def root():
     return {"service": "SIWES API", "status": "ok"}
 
+@api.get("/demo-users")
+async def demo_users():
+    """Public list of seeded demo accounts (labels + emails only, no passwords)."""
+    return [
+        {"role": "Admin", "email": "admin@siwes.edu"},
+        {"role": "Coordinator", "email": "coordinator@siwes.edu"},
+        {"role": "Supervisor", "email": "supervisor@siwes.edu"},
+        {"role": "Student", "email": "student@siwes.edu"},
+    ]
+
 app.include_router(api)
 
 app.add_middleware(

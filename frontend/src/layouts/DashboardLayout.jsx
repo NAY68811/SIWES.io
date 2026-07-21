@@ -57,7 +57,9 @@ export default function DashboardLayout() {
       try {
         const { data } = await api.get("/notifications");
         if (mounted) setUnread(data.filter((n) => !n.read).length);
-      } catch { /* noop */ }
+      } catch (err) {
+        console.debug("notifications poll failed", err);
+      }
     };
     fetchN();
     const iv = setInterval(fetchN, 30000);

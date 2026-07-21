@@ -91,9 +91,9 @@ export default function DashboardHome() {
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <h3 className="text-lg font-bold">Quick tips</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {user.role === "student" && "Register your company from ‘My Company', then submit a daily logbook entry. Your supervisor will review it."}
-            {user.role === "supervisor" && "Open ‘Visits & GPS' to schedule a physical visit and verify your location within 150m of the student's approved company."}
-            {(user.role === "coordinator" || user.role === "admin") && "Use ‘Allocations' to auto-assign supervisors or manually reassign students. Approve companies from the Companies tab."}
+            {user.role === "student" && "Register your company from ‘My Company’, then submit a daily logbook entry. Your supervisor will review it."}
+            {user.role === "supervisor" && "Open ‘Visits & GPS’ to schedule a physical visit and verify your location within 150m of the student’s approved company."}
+            {(user.role === "coordinator" || user.role === "admin") && "Use ‘Allocations’ to auto-assign supervisors or manually reassign students. Approve companies from the Companies tab."}
           </p>
           <div className="border-t border-border pt-3">
             <div className="text-xs uppercase tracking-widest text-primary">GPS radius</div>

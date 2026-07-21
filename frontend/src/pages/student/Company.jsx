@@ -86,7 +86,7 @@ export default function StudentCompany() {
         </form>
 
         <div>
-          <p className="text-xs text-muted-foreground mb-2">Click on the map to place your company location, or use "Use my current location".</p>
+          <p className="text-xs text-muted-foreground mb-2">Click on the map to place your company location, or use &ldquo;Use my current location&rdquo;.</p>
           <LeafletMap
             marker={[Number(form.latitude), Number(form.longitude)]}
             onPick={(lat, lng) => setForm(f => ({ ...f, latitude: lat, longitude: lng }))}

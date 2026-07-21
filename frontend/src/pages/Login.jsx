@@ -1,18 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
-import { formatApiError } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 
-const DEMO = [
-  { role: "Admin", email: "admin@siwes.edu", password: "Admin@1234" },
-  { role: "Coordinator", email: "coordinator@siwes.edu", password: "Password@123" },
-  { role: "Supervisor", email: "supervisor@siwes.edu", password: "Password@123" },
-  { role: "Student", email: "student@siwes.edu", password: "Password@123" },
-];
+// Demo password shown for exploration mode; matches backend seed defaults.
+// Not a real secret — the accounts are throwaway demo users in the seeded DB.
+const DEMO_PASSWORD_ADMIN = "Admin@1234";
+const DEMO_PASSWORD_OTHERS = "Password@123";
+
+function DemoAccounts({ demos, onPick }) {
+  if (!demos.length) return null;
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card p-4">
+      <div className="text-xs uppercase tracking-widest text-primary mb-3">Demo accounts</div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {demos.map((d) => (
+          <button key={d.role} onClick={() => onPick(d)}
+            className="text-left p-3 rounded-md border border-border hover:border-primary"
+            data-testid={`demo-${d.role.toLowerCase()}`} type="button">
+            <div className="font-bold">{d.role}</div>
+            <div className="text-muted-foreground truncate">{d.email}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Login() {
   const { login } = useAuth();
@@ -20,6 +37,13 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demos, setDemos] = useState([]);
+
+  useEffect(() => {
+    api.get("/demo-users")
+      .then((r) => setDemos(r.data))
+      .catch((err) => console.debug("demo-users fetch failed", err));
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -33,6 +57,11 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
+  const pickDemo = (d) => {
+    setEmail(d.email);
+    setPassword(d.role === "Admin" ? DEMO_PASSWORD_ADMIN : DEMO_PASSWORD_OTHERS);
+  };
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between p-12 bg-secondary relative overflow-hidden">
@@ -44,19 +73,7 @@ export default function Login() {
         <div className="relative">
           <h2 className="text-3xl font-extrabold tracking-tight">The supervision layer<br /> your SIWES office was missing.</h2>
           <p className="mt-4 text-muted-foreground max-w-md">GPS-verified visits, digital logbooks, and one-click allocations — all in one place.</p>
-          <div className="mt-8 rounded-xl border border-border bg-card p-4">
-            <div className="text-xs uppercase tracking-widest text-primary mb-3">Demo accounts</div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {DEMO.map(d => (
-                <button key={d.role} onClick={() => { setEmail(d.email); setPassword(d.password); }}
-                  className="text-left p-3 rounded-md border border-border hover:border-primary"
-                  data-testid={`demo-${d.role.toLowerCase()}`}>
-                  <div className="font-bold">{d.role}</div>
-                  <div className="text-muted-foreground truncate">{d.email}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <DemoAccounts demos={demos} onPick={pickDemo} />
         </div>
         <div className="relative text-xs text-muted-foreground">© {new Date().getFullYear()} SIWES.io</div>
       </div>

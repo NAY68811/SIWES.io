@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -14,19 +14,23 @@ export default function SupervisorReviews() {
   useEffect(() => {
     api.get("/allocations/my-students").then(r => {
       setStudents(r.data);
-      if (r.data[0]) setSelected(r.data[0].id);
+      setSelected((prev) => prev || r.data[0]?.id || "");
     });
   }, []);
 
-  useEffect(() => {
-    if (selected) api.get(`/logbooks/student/${selected}`).then(r => setLogs(r.data));
+  const loadLogs = useCallback(async () => {
+    if (!selected) return;
+    const r = await api.get(`/logbooks/student/${selected}`);
+    setLogs(r.data);
   }, [selected]);
+
+  useEffect(() => { loadLogs(); }, [loadLogs]);
 
   const review = async (lid, status) => {
     try {
       await api.patch(`/logbooks/${lid}/review`, { status, comment: comment[lid] || null });
       toast.success(`Entry ${status}`);
-      const r = await api.get(`/logbooks/student/${selected}`); setLogs(r.data);
+      await loadLogs();
     } catch (err) { toast.error(formatApiError(err.response?.data?.detail)); }
   };
 

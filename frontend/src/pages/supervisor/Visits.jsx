@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,12 @@ export default function SupervisorVisits() {
   const [note, setNote] = useState("");
   const [busyId, setBusyId] = useState(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const s = await api.get("/allocations/my-students"); setStudents(s.data);
     const v = await api.get("/visits/mine"); setVisits(v.data);
-    if (!selected && s.data[0]) setSelected(s.data[0].id);
-  };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+    setSelected((prev) => prev || s.data[0]?.id || "");
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const schedule = async (e) => {
     e.preventDefault();
@@ -59,7 +59,7 @@ export default function SupervisorVisits() {
     <div className="space-y-6" data-testid="supervisor-visits">
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Visits & GPS verification</h1>
-        <p className="text-sm text-muted-foreground mt-1">Schedule visits and confirm your physical presence at the student's SIWES site.</p>
+        <p className="text-sm text-muted-foreground mt-1">Schedule visits and confirm your physical presence at the student&rsquo;s SIWES site.</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">

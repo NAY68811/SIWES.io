@@ -35,7 +35,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    try { await api.post("/auth/logout"); } catch { /* noop */ }
+    try {
+      await api.post("/auth/logout");
+    } catch (err) {
+      // Non-fatal — cookies will be cleared client-side on next request
+      console.debug("logout error", err);
+    }
     setUser(false);
   };
 

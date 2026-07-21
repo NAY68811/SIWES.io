@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,11 @@ export default function StudentLogbook() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const load = () => api.get("/logbooks/mine").then(r => setEntries(r.data));
-  useEffect(() => { load(); }, []);
+  const load = useCallback(async () => {
+    const r = await api.get("/logbooks/mine");
+    setEntries(r.data);
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const upd = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
