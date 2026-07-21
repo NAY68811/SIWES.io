@@ -1,56 +1,82 @@
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import DashboardHome from "@/pages/DashboardHome";
+import StudentCompany from "@/pages/student/Company";
+import StudentLogbook from "@/pages/student/Logbook";
+import StudentSupervisor from "@/pages/student/MySupervisor";
+import SupervisorStudents from "@/pages/supervisor/Students";
+import SupervisorVisits from "@/pages/supervisor/Visits";
+import SupervisorReviews from "@/pages/supervisor/Reviews";
+import CoordStudents from "@/pages/coordinator/Students";
+import CoordSupervisors from "@/pages/coordinator/Supervisors";
+import CoordCompanies from "@/pages/coordinator/Companies";
+import CoordAllocations from "@/pages/coordinator/Allocations";
+import CoordDepartments from "@/pages/coordinator/Departments";
+import CoordReports from "@/pages/coordinator/Reports";
+import Profile from "@/pages/Profile";
+import Notifications from "@/pages/Notifications";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
+function Protected() {
+  const { user, checked } = useAuth();
+  if (!checked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  return <Outlet />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Toaster position="top-right" richColors />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            <Route element={<Protected />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/app" element={<DashboardHome />} />
+                <Route path="/app/profile" element={<Profile />} />
+                <Route path="/app/notifications" element={<Notifications />} />
+
+                {/* Student */}
+                <Route path="/app/company" element={<StudentCompany />} />
+                <Route path="/app/logbook" element={<StudentLogbook />} />
+                <Route path="/app/my-supervisor" element={<StudentSupervisor />} />
+
+                {/* Supervisor */}
+                <Route path="/app/students" element={<SupervisorStudents />} />
+                <Route path="/app/visits" element={<SupervisorVisits />} />
+                <Route path="/app/reviews" element={<SupervisorReviews />} />
+
+                {/* Coordinator/Admin */}
+                <Route path="/app/coord/students" element={<CoordStudents />} />
+                <Route path="/app/coord/supervisors" element={<CoordSupervisors />} />
+                <Route path="/app/coord/companies" element={<CoordCompanies />} />
+                <Route path="/app/coord/allocations" element={<CoordAllocations />} />
+                <Route path="/app/coord/departments" element={<CoordDepartments />} />
+                <Route path="/app/coord/reports" element={<CoordReports />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
