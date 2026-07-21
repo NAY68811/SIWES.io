@@ -56,7 +56,7 @@ export default function DashboardHome() {
   return (
     <div className="space-y-6" data-testid="dashboard-home">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Welcome, {user.name?.split(" ")[0]}.</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Welcome, {(user.name || "").split(" ").filter(w => !/^(Dr\.?|Mr\.?|Mrs\.?|Ms\.?|Engr\.?|Prof\.?)$/i.test(w))[0] || user.name}.</h1>
         <p className="text-muted-foreground mt-1 text-sm">Here's what's happening across your SIWES workspace.</p>
       </div>
 

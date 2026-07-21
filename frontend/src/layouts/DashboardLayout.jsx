@@ -37,6 +37,7 @@ function navFor(role) {
       { to: "/app/coord/companies", icon: Buildings, label: "Companies" },
       { to: "/app/coord/allocations", icon: Compass, label: "Allocations" },
       { to: "/app/coord/departments", icon: List, label: "Departments" },
+      { to: "/app/coord/reports", icon: FileText, label: "Reports" },
       { to: "/app/coord/reports", icon: ChartBar, label: "Analytics" },
     ],
   }[role] || [];
