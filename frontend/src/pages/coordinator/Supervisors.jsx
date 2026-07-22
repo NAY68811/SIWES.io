@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -94,6 +94,9 @@ export default function CoordSupervisors() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit supervisor" : "Create supervisor"}</DialogTitle>
+              <DialogDescription>
+                {editing ? "Update supervisor details." : "A temporary password is generated. Share it with the supervisor — they'll be forced to change it on first login."}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-3" data-testid="supervisor-form">
               <div><Label>Name</Label><Input required value={form.name} onChange={upd("name")} data-testid="sup-name" /></div>

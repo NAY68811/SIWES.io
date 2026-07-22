@@ -30,6 +30,16 @@ visit verification (100–150 m radius), digital logbook, reports, dashboards.
 - Seeded demo users, department list, allocation, approved company.
 - 22/22 backend pytest suite passing; frontend E2E validated across 4 roles.
 
+## Implemented (v1.1 — 2026-02, workflow refinement)
+- Public `/api/auth/register` **restricted to students only**; supervisors and coordinators must be created by an admin/coordinator.
+- Coordinator can now **create / edit / delete supervisor accounts** via dialog UI with auto-generated temporary passwords.
+- Admin can now **create / delete coordinator accounts** (+ supervisors) with the same temp-password flow.
+- `must_change_password` flag + `/app/change-password` route: **first login is forced to reset the temporary password** before accessing any dashboard.
+- **Supervisor Assessments**: 5-star overall + punctuality / teamwork / technical skill sub-metrics + free-text feedback. Upserts on (student, supervisor). Students see their assessment card in *My Supervisor*.
+- **Coordinator Sessions CRUD**: create, activate (deactivates others), delete academic sessions.
+- **Admin Audit Logs**: recent role-based system actions with actor, action, target, meta.
+- 35/35 backend tests + 8/8 frontend E2E flows passing.
+
 ## Prioritized backlog
 ### P0 — production hardening
 - Explicit CORS allow-list + rate limiting on `/api/auth/login`.

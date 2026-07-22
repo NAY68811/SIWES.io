@@ -70,7 +70,7 @@ export default function DashboardHome() {
             <h3 className="text-lg font-bold">Logbook activity</h3>
             <span className="text-xs text-muted-foreground">last 8 weeks</span>
           </div>
-          <div className="h-64">
+          <div className="h-64" style={{ minHeight: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chart.length ? chart : [{week: "—", entries: 0}]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

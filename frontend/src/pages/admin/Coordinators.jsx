@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 
 export default function AdminCoordinators() {
@@ -45,7 +45,10 @@ export default function AdminCoordinators() {
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setTempCreds(null); setForm({ email: "", name: "", phone: "" }); } }}>
           <DialogTrigger asChild><Button data-testid="new-coordinator">+ New coordinator</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Create coordinator</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Create coordinator</DialogTitle>
+              <DialogDescription>A temporary password is generated. Share it with the coordinator — they'll be forced to change it on first login.</DialogDescription>
+            </DialogHeader>
             <form onSubmit={submit} className="space-y-3">
               <div><Label>Name</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="coord-name" /></div>
               <div><Label>Email</Label><Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="coord-email" /></div>
