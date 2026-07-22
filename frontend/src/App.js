@@ -24,6 +24,7 @@ import CoordSessions from "@/pages/coordinator/Sessions";
 import CoordReports from "@/pages/coordinator/Reports";
 import AdminCoordinators from "@/pages/admin/Coordinators";
 import AdminAuditLogs from "@/pages/admin/AuditLogs";
+import AdminBackup from "@/pages/admin/Backup";
 import Profile from "@/pages/Profile";
 import Notifications from "@/pages/Notifications";
 import "@/App.css";
@@ -87,6 +88,7 @@ export default function App() {
                 {/* Admin */}
                 <Route path="/app/admin/coordinators" element={<AdminCoordinators />} />
                 <Route path="/app/admin/audit" element={<AdminAuditLogs />} />
+                <Route path="/app/admin/backup" element={<AdminBackup />} />
               </Route>
             </Route>
 

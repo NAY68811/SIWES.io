@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   House, MapPin, ClipboardText, Users, Buildings, GraduationCap,
   ChartBar, BellRinging, UserCircle, SignOut, List, X, Notepad, Compass, FileText,
-  Calendar, ShieldCheck, Star,
+  Calendar, ShieldCheck, Star, Cloud,
 } from "@phosphor-icons/react";
 import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +44,7 @@ function navFor(role) {
       { to: "/app/coord/sessions", icon: Calendar, label: "Sessions" },
       { to: "/app/coord/reports", icon: FileText, label: "Reports" },
       { to: "/app/admin/audit", icon: ChartBar, label: "Audit Logs" },
+      { to: "/app/admin/backup", icon: Cloud, label: "Backup & Restore" },
     ],
   }[role] || [];
   return [...base, ...rest];
@@ -105,9 +106,17 @@ export default function DashboardLayout() {
         </nav>
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border bg-card">
           <div className="flex items-center gap-3 p-2 rounded-md">
-            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary grid place-items-center font-bold">
-              {user.name?.[0]?.toUpperCase() || "U"}
-            </div>
+            {user.avatar ? (
+              <img
+                src={user.avatar.startsWith("http") ? user.avatar : `${process.env.REACT_APP_BACKEND_URL}${user.avatar}`}
+                alt={user.name}
+                className="h-9 w-9 rounded-full object-cover border border-border"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-primary/10 text-primary grid place-items-center font-bold">
+                {user.name?.[0]?.toUpperCase() || "U"}
+              </div>
+            )}
             <div className="text-sm flex-1 min-w-0">
               <div className="font-semibold truncate">{user.name}</div>
               <div className="text-xs text-muted-foreground capitalize">{user.role}</div>

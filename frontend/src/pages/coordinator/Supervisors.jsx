@@ -58,8 +58,8 @@ export default function CoordSupervisors() {
         const payload = { ...form, role: "supervisor" };
         if (!payload.department_id) delete payload.department_id;
         const { data } = await api.post("/users", payload);
-        setTempCreds({ email: data.email, password: data.temporary_password });
-        toast.success("Supervisor created");
+        setTempCreds({ email: data.email, password: data.temporary_password, email_sent: data.email_sent });
+        toast.success(data.email_sent ? "Supervisor created — credentials emailed" : "Supervisor created");
       }
       load();
     } catch (err) {
@@ -116,7 +116,11 @@ export default function CoordSupervisors() {
               </div>
               {tempCreds && (
                 <div className="p-3 rounded-md bg-primary/10 text-sm border border-primary/30">
-                  <div className="font-bold">Temporary credentials — copy now:</div>
+                  <div className="font-bold">
+                    {tempCreds.email_sent
+                      ? "Credentials emailed. Backup copy:"
+                      : "Temporary credentials — copy now (email not delivered):"}
+                  </div>
                   <div>Email: <span className="font-mono">{tempCreds.email}</span></div>
                   <div>Password: <span className="font-mono">{tempCreds.password}</span></div>
                 </div>

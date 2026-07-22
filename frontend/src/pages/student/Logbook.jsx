@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import ImageUpload from "@/components/ImageUpload";
 
 const emptyForm = {
   date: new Date().toISOString().slice(0, 10),
@@ -57,7 +58,15 @@ export default function StudentLogbook() {
           <div><Label>Activities</Label><Textarea required rows={4} value={form.activities} onChange={upd("activities")} data-testid="log-activities" /></div>
           <div><Label>Skills learned</Label><Input value={form.skills} onChange={upd("skills")} data-testid="log-skills" /></div>
           <div><Label>Challenges</Label><Textarea rows={2} value={form.challenges} onChange={upd("challenges")} /></div>
-          <div><Label>Image URL (optional)</Label><Input value={form.image_url} onChange={upd("image_url")} placeholder="https://…" /></div>
+          <div>
+            <Label>Attach image (optional)</Label>
+            <ImageUpload
+              scope="logbook"
+              value={form.image_url}
+              onChange={(url) => setForm(f => ({ ...f, image_url: url || "" }))}
+              testId="log-image-upload"
+            />
+          </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={saving} data-testid="log-submit">{saving ? "Saving…" : editing ? "Update" : "Submit"}</Button>
             {editing && <Button type="button" variant="outline" onClick={() => { setEditing(null); setForm(emptyForm); }}>Cancel</Button>}
@@ -82,6 +91,10 @@ export default function StudentLogbook() {
                 </Badge>
               </div>
               <p className="mt-3 text-sm whitespace-pre-wrap">{e.activities}</p>
+              {e.image_url && (
+                <img src={e.image_url.startsWith("http") ? e.image_url : `${process.env.REACT_APP_BACKEND_URL}${e.image_url}`}
+                  alt="logbook" className="mt-3 rounded-md max-h-48 border border-border object-cover" />
+              )}
               {e.comment && <div className="mt-2 text-xs italic text-muted-foreground">Supervisor: {e.comment}</div>}
               {e.status !== "approved" && (
                 <Button variant="ghost" size="sm" className="mt-2"

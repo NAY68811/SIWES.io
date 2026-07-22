@@ -66,6 +66,10 @@ export default function SupervisorReviews() {
               <Badge variant={l.status === "approved" ? "default" : l.status === "rejected" ? "destructive" : "secondary"}>{l.status}</Badge>
             </div>
             <p className="mt-3 text-sm whitespace-pre-wrap">{l.activities}</p>
+            {l.image_url && (
+              <img src={l.image_url.startsWith("http") ? l.image_url : `${process.env.REACT_APP_BACKEND_URL}${l.image_url}`}
+                alt="logbook" className="mt-3 rounded-md max-h-64 border border-border object-cover" />
+            )}
             {l.challenges && <p className="mt-2 text-xs italic text-muted-foreground">Challenge: {l.challenges}</p>}
             {l.status === "pending" && (
               <div className="mt-4 space-y-2">

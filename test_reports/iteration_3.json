@@ -1,0 +1,53 @@
+{
+  "summary": "Iteration 3 (email delivery, uploads, PDF export, backup/restore) — full backend + frontend verification. All 51 backend pytest cases pass (16 new for iter-3 + 35 regression from iter-1/iter-2). All frontend E2E flows for image upload (student logbook, avatar), coordinator PDF button and admin Backup/Restore verified end-to-end. Fixed one critical missing import in App.js that was preventing the entire app from mounting.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter3.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now 1195 lines — recommend splitting into routers (auth/users/uploads/reports/admin) for maintainability.",
+    "GET /api/uploads/file/{id} authenticates via cookie only; image tags CAN send cookies on same-origin, so this works. But cross-origin (frontend on different domain than backend) image loads would fail because <img> tags don't set withCredentials by default. In this deployment the preview URL is same-origin so it works.",
+    "POST /admin/restore is destructive (delete_many + insert_many per collection). Recommend a transaction OR a safety flag to prevent accidental clobber. Currently protected by admin RBAC + browser confirm() only.",
+    "Backup dump has no schema/version marker — restoring an old backup against a newer schema could silently insert bad docs.",
+    "email_service surface: unable to verify inside Docker but end-to-end response confirms email_sent=true for gmail.com and false for example.com as spec'd."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter3.py (created)",
+    "/app/frontend/src/App.js (CRITICAL FIX: added missing `import AdminBackup from '@/pages/admin/Backup'` — without this, /app/admin/backup route referenced an undefined component causing 'AdminBackup is not defined' ReferenceError that crashed the entire React app on every route)"
+  ],
+  "success_rate": {"backend": "100% (51/51)", "frontend": "100% (all 4 iter-3 flows verified)"},
+  "test_credentials": "admin@siwes.edu/Admin@1234, coordinator@siwes.edu/Password@123, supervisor@siwes.edu/Password@123, student@siwes.edu/Password@123",
+  "seed_data_creation": "Test-prefixed users (TEST_es_, TEST_rt_, real.sup+iter3 gmail alias, TEST_sup_, etc.) plus uploaded PNG files remain in DB from Playwright + pytest runs. Non-destructive.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend regression: 51 tests (~24s). test_iter3.py covers: (1) email delivery — coordinator create supervisor on gmail.com => email_sent=true; on example.com => email_sent=false but user still created with temp password; (2) uploads — POST /api/uploads/logbook + /api/uploads/avatar return {id,url starting with /api/uploads/file/,content_type}, bad scope=>400, bad ext=>400, GET download returns exact bytes with correct content-type, unauth=>401; (3) PDF — /api/reports/summary.pdf as coordinator+admin returns %PDF magic + attachment header, student=>403; (4) backup/restore — GET /api/admin/backup returns JSON with created_at + 12 collections, non-admin=>403; POST /api/admin/restore with invalid JSON=>400, non-admin=>403, and full round-trip (create user → backup → delete user → restore → user is back). Frontend E2E confirmed: log-image-upload widget shows preview + saves image URL + entry renders with image; avatar-upload attaches (hidden input, use state='attached' when writing selector) and after save+reload sidebar aside contains <img>; download-pdf opens new tab (browser PDF viewer, url may appear as 'about:blank' initially but the underlying API returns 200 %PDF); admin sidebar has 'Backup & Restore' link with Cloud icon; backup-download / restore-input / restore-btn present; restore round-trip via UI shows 'Last restore' panel with 12 collections and doc counts.",
+  "verified_features": [
+    "POST /api/users returns temporary_password + email_sent boolean",
+    "email_sent=true for real domains (gmail), false for example.com (blocked test domain surfaced from Resend 422)",
+    "POST /api/uploads/{logbook|avatar} with PNG returns {id, url='/api/uploads/file/<id>', content_type}",
+    "Invalid scope + unsupported extension => 400",
+    "GET /api/uploads/file/<id> returns exact bytes + correct content-type",
+    "Unauthenticated download => 401",
+    "GET /api/reports/summary.pdf as coordinator/admin returns application/pdf with %PDF magic and attachment disposition; student => 403",
+    "GET /api/admin/backup as admin returns JSON with created_at + all 12 collections (users/departments/sessions/companies/logbooks/visits/gps_logs/allocations/notifications/assessments/audit_logs/files); non-admin => 403",
+    "POST /api/admin/restore with invalid JSON => 400; non-admin => 403; valid backup restores collections and returns {restored: {collection: count}}",
+    "Round-trip: backup → delete user → restore → user restored (verified via GET /api/users)",
+    "Frontend: /app/logbook has log-image-upload input; upload shows preview; submit creates entry with image visible",
+    "Frontend: /app/profile has avatar-upload (hidden file input); after upload+save+reload the sidebar footer <aside> contains an <img>",
+    "Frontend: /app/coord/reports has both Download CSV and download-pdf buttons; click opens new tab which fetches /api/reports/summary.pdf (200, application/pdf, %PDF)",
+    "Frontend: admin sidebar has 'Backup & Restore' link; /app/admin/backup renders backup-download + restore-input; end-to-end restore via file picker shows 'Last restore' counts panel with 12 collection stats"
+  ],
+  "rca_of_the_issue": "CRITICAL FIX APPLIED — /app/frontend/src/App.js had a Route element `<AdminBackup />` on line 90 but the corresponding `import AdminBackup from '@/pages/admin/Backup'` was missing. Because JSX is compiled to `React.createElement(AdminBackup, ...)`, the reference was evaluated on every render of the App tree (not lazy), which threw `ReferenceError: AdminBackup is not defined` on ANY route including /login. Result: the entire React app was crashing before mount and showing a blank page. Fix: added the missing import. This unblocked all frontend testing (login page rendered normally after the fix)."
+}

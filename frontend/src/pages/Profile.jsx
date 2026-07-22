@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatApiError } from "@/lib/api";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function Profile() {
   const { user, refresh } = useAuth();
   const [form, setForm] = useState({
     name: user?.name || "", phone: user?.phone || "",
     matric_no: user?.matric_no || "", staff_id: user?.staff_id || "",
-    level: user?.level || "",
+    level: user?.level || "", avatar: user?.avatar || "",
   });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
-    if (user) setForm(f => ({ ...f, name: user.name, phone: user.phone || "" }));
+    if (user) setForm(f => ({ ...f,
+      name: user.name, phone: user.phone || "",
+      matric_no: user.matric_no || "", staff_id: user.staff_id || "",
+      level: user.level || "", avatar: user.avatar || "",
+    }));
   }, [user]);
 
   const upd = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -37,6 +41,15 @@ export default function Profile() {
     <div className="max-w-2xl" data-testid="profile-page">
       <h1 className="text-3xl font-extrabold tracking-tight mb-6">Profile</h1>
       <form onSubmit={save} className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <Label>Avatar</Label>
+          <ImageUpload
+            scope="avatar"
+            value={form.avatar}
+            onChange={(url) => setForm(f => ({ ...f, avatar: url || "" }))}
+            testId="avatar-upload"
+          />
+        </div>
         <div>
           <Label>Full name</Label>
           <Input value={form.name} onChange={upd("name")} data-testid="profile-name" />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, API } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 function toCSV(rows) {
@@ -13,17 +13,23 @@ function toCSV(rows) {
 export default function CoordReports() {
   const [rows, setRows] = useState([]);
   useEffect(() => { api.get("/reports/summary").then(r => setRows(r.data)); }, []);
-  const download = () => {
+  const downloadCSV = () => {
     const blob = new Blob([toCSV(rows)], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "siwes-report.csv"; a.click();
     URL.revokeObjectURL(url);
   };
+  const downloadPDF = () => {
+    window.open(`${API}/reports/summary.pdf`, "_blank");
+  };
   return (
     <div className="space-y-6" data-testid="coord-reports">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-3xl font-extrabold tracking-tight">Reports</h1>
-        <Button onClick={download} data-testid="download-csv">Download CSV</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={downloadCSV} data-testid="download-csv">Download CSV</Button>
+          <Button onClick={downloadPDF} data-testid="download-pdf">Download PDF</Button>
+        </div>
       </div>
       <div className="rounded-xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">

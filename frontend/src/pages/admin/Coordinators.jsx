@@ -23,8 +23,8 @@ export default function AdminCoordinators() {
     e.preventDefault();
     try {
       const { data } = await api.post("/users", { ...form, role: "coordinator" });
-      setTempCreds({ email: data.email, password: data.temporary_password });
-      toast.success("Coordinator created");
+      setTempCreds({ email: data.email, password: data.temporary_password, email_sent: data.email_sent });
+      toast.success(data.email_sent ? "Coordinator created — credentials emailed" : "Coordinator created");
       load();
     } catch (err) { toast.error(formatApiError(err.response?.data?.detail)); }
   };
@@ -55,7 +55,11 @@ export default function AdminCoordinators() {
               <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
               {tempCreds && (
                 <div className="p-3 rounded-md bg-primary/10 text-sm border border-primary/30">
-                  <div className="font-bold">Temporary credentials — copy now:</div>
+                  <div className="font-bold">
+                    {tempCreds.email_sent
+                      ? "Credentials emailed. Backup copy:"
+                      : "Temporary credentials — copy now (email not delivered):"}
+                  </div>
                   <div>Email: <span className="font-mono">{tempCreds.email}</span></div>
                   <div>Password: <span className="font-mono">{tempCreds.password}</span></div>
                 </div>

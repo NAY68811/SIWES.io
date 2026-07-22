@@ -15,10 +15,14 @@ from typing import Optional, List, Literal, Any
 import bcrypt
 import jwt
 from bson import ObjectId
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, UploadFile, File, Header
+from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+
+from services.email_service import send_email, credentials_email_html
+from services import storage_service
 
 # ---------- Setup ----------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -237,6 +241,8 @@ async def startup():
     await db.notifications.create_index([("user_id", 1), ("created_at", -1)])
     await db.assessments.create_index([("student_id", 1), ("supervisor_id", 1)], unique=True)
     await db.audit_logs.create_index([("created_at", -1)])
+    await db.files.create_index("owner_id")
+    storage_service.init_storage()
     await seed_defaults()
     logger.info("SIWES backend ready.")
 
@@ -456,8 +462,16 @@ async def create_user(body: AdminCreateUserIn,
         except Exception: pass
     r = await db.users.insert_one(doc)
     await audit(user["_id"], f"user.create.{body.role}", email)
+    # Send credentials email (fire-and-forget — surface temp password inline as fallback)
+    frontend_url = os.environ.get("FRONTEND_URL", "https://siwes-supervisor.preview.emergentagent.com")
+    email_sent = await send_email(
+        recipient=email,
+        subject=f"Your SIWES.io {body.role} account is ready",
+        html=credentials_email_html(body.name, email, temp_password, body.role, f"{frontend_url}/login"),
+    )
     return {**serialize_user({**doc, "_id": r.inserted_id}),
-            "temporary_password": temp_password}
+            "temporary_password": temp_password,
+            "email_sent": email_sent}
 
 @api.put("/users/{uid}")
 async def edit_user(uid: str, body: dict,
@@ -898,6 +912,198 @@ async def report_summary(user: dict = Depends(require_roles("coordinator", "admi
         s["visits_verified"] = await db.visits.count_documents(
             {"student_id": ObjectId(s["id"]), "status": "verified"})
     return students
+
+
+@api.get("/reports/summary.pdf")
+async def report_summary_pdf(user: dict = Depends(require_roles("coordinator", "admin", "supervisor"))):
+    """Generate a PDF summary of student SIWES progress."""
+    import io
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+
+    students = [serialize_user(u) async for u in db.users.find({"role": "student"})]
+    data = [["Student", "Matric No.", "Logs total", "Approved", "Visits verified"]]
+    for s in students:
+        sid = ObjectId(s["id"])
+        approved = await db.logbooks.count_documents({"student_id": sid, "status": "approved"})
+        total = await db.logbooks.count_documents({"student_id": sid})
+        verified = await db.visits.count_documents({"student_id": sid, "status": "verified"})
+        data.append([s.get("name") or "", s.get("matric_no") or "—", str(total), str(approved), str(verified)])
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=18*mm, rightMargin=18*mm,
+                            topMargin=18*mm, bottomMargin=18*mm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("title", parent=styles["Title"], fontSize=20, textColor=colors.HexColor("#0f172a"), spaceAfter=6)
+    sub_style = ParagraphStyle("sub", parent=styles["Normal"], textColor=colors.HexColor("#64748b"), fontSize=10, spaceAfter=18)
+    story = [
+        Paragraph("SIWES Performance Report", title_style),
+        Paragraph(f"Generated {now_utc().strftime('%d %b %Y, %H:%M UTC')} · Requested by {user['name']}", sub_style),
+    ]
+    tbl = Table(data, colWidths=[55*mm, 32*mm, 25*mm, 25*mm, 35*mm])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f60ff")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+        ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#0f172a")),
+        ("FONTSIZE", (0, 1), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#e2e8f0")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(tbl)
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"Total students: {len(students)}", styles["Normal"]))
+    doc.build(story)
+    buf.seek(0)
+    filename = f"siwes-report-{now_utc().strftime('%Y%m%d-%H%M')}.pdf"
+    return StreamingResponse(buf, media_type="application/pdf",
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ---------- File Uploads (Object Storage) ----------
+def _ext_of(filename: str, content_type: str) -> str:
+    if "." in filename:
+        return filename.rsplit(".", 1)[-1].lower()
+    return (content_type or "").split("/")[-1] or "bin"
+
+@api.post("/uploads/{scope}")
+async def upload_file(scope: str, file: UploadFile = File(...),
+                      user: dict = Depends(get_current_user)):
+    """Upload an image. scope: 'logbook' | 'avatar'. Returns {id, url}."""
+    if scope not in ("logbook", "avatar"):
+        raise HTTPException(400, "Invalid upload scope")
+    if not storage_service.is_available():
+        raise HTTPException(503, "Object storage is not configured")
+    ext = _ext_of(file.filename or "", file.content_type or "")
+    if ext not in storage_service.MIME:
+        raise HTTPException(400, f"Unsupported file type: {ext}")
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(413, "File exceeds 5MB")
+    path = storage_service.build_path(scope, str(user["_id"]), file.filename or f"upload.{ext}")
+    result = storage_service.put_object(path, data, storage_service.MIME[ext])
+    file_id = secrets.token_urlsafe(12)
+    await db.files.insert_one({
+        "file_id": file_id,
+        "owner_id": user["_id"],
+        "scope": scope,
+        "storage_path": result["path"],
+        "original_filename": file.filename,
+        "content_type": storage_service.MIME[ext],
+        "size": result.get("size", len(data)),
+        "is_deleted": False,
+        "created_at": iso(now_utc()),
+    })
+    # Return URL that the frontend will hit (with cookie auth via /api)
+    return {"id": file_id, "url": f"/api/uploads/file/{file_id}",
+            "content_type": storage_service.MIME[ext]}
+
+@api.get("/uploads/file/{file_id}")
+async def download_file(file_id: str, request: Request):
+    """Serve an uploaded file. Uses cookie auth."""
+    # Authenticate via cookie or Authorization header (image tags cannot send headers,
+    # but our images are wrapped in fetch/blob or use cookie auth for same-origin).
+    try:
+        await get_current_user(request)
+    except HTTPException:
+        raise
+    rec = await db.files.find_one({"file_id": file_id, "is_deleted": False})
+    if not rec:
+        raise HTTPException(404, "File not found")
+    try:
+        data, ct = storage_service.get_object(rec["storage_path"])
+    except Exception as e:
+        logger.error("download %s failed: %s", file_id, e)
+        raise HTTPException(502, "Storage unavailable")
+    return Response(content=data, media_type=rec.get("content_type", ct))
+
+
+# ---------- Backup / Restore (admin) ----------
+BACKUP_COLLECTIONS = [
+    "users", "departments", "sessions", "companies", "logbooks",
+    "visits", "gps_logs", "allocations", "notifications",
+    "assessments", "audit_logs", "files",
+]
+
+def _mongo_to_json(doc: dict) -> dict:
+    out = {}
+    for k, v in doc.items():
+        if isinstance(v, ObjectId):
+            out[k] = {"$oid": str(v)}
+        elif isinstance(v, dict):
+            out[k] = _mongo_to_json(v)
+        elif isinstance(v, list):
+            out[k] = [_mongo_to_json(x) if isinstance(x, dict) else
+                      ({"$oid": str(x)} if isinstance(x, ObjectId) else x) for x in v]
+        elif isinstance(v, datetime):
+            out[k] = v.isoformat()
+        else:
+            out[k] = v
+    return out
+
+def _json_to_mongo(doc: dict) -> dict:
+    out = {}
+    for k, v in doc.items():
+        if isinstance(v, dict) and set(v.keys()) == {"$oid"}:
+            out[k] = ObjectId(v["$oid"])
+        elif isinstance(v, dict):
+            out[k] = _json_to_mongo(v)
+        elif isinstance(v, list):
+            out[k] = [_json_to_mongo(x) if isinstance(x, dict) else x for x in v]
+        else:
+            out[k] = v
+    return out
+
+@api.get("/admin/backup")
+async def db_backup(user: dict = Depends(require_roles("admin"))):
+    """Download a JSON backup of all SIWES collections."""
+    import io, json
+    dump = {"created_at": iso(now_utc()), "collections": {}}
+    for name in BACKUP_COLLECTIONS:
+        col = db[name]
+        dump["collections"][name] = [
+            _mongo_to_json(d) async for d in col.find()
+        ]
+    await audit(user["_id"], "admin.backup",
+                meta={"docs": sum(len(v) for v in dump["collections"].values())})
+    buf = io.BytesIO(json.dumps(dump, indent=2).encode())
+    filename = f"siwes-backup-{now_utc().strftime('%Y%m%d-%H%M%S')}.json"
+    return StreamingResponse(buf, media_type="application/json",
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+@api.post("/admin/restore")
+async def db_restore(file: UploadFile = File(...),
+                     user: dict = Depends(require_roles("admin"))):
+    """Restore all collections from a backup JSON file. This REPLACES existing data."""
+    import json
+    raw = await file.read()
+    try:
+        data = json.loads(raw.decode())
+        collections = data.get("collections", {})
+    except Exception:
+        raise HTTPException(400, "Invalid backup file")
+    stats = {}
+    for name in BACKUP_COLLECTIONS:
+        if name not in collections:
+            continue
+        docs = collections[name] or []
+        await db[name].delete_many({})
+        if docs:
+            await db[name].insert_many([_json_to_mongo(d) for d in docs])
+        stats[name] = len(docs)
+    await audit(user["_id"], "admin.restore", meta=stats)
+    return {"restored": stats}
+
 
 # ---------- Assessments ----------
 @api.post("/assessments")
