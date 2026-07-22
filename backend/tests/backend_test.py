@@ -287,3 +287,230 @@ class TestReports:
         s, _ = _session("student")
         r = s.get(f"{API}/reports/summary")
         assert r.status_code == 403
+
+
+
+# ---------------- ITERATION 2: user mgmt / temp password / RBAC ----------------
+class TestUserManagement:
+    def test_public_register_role_forced_to_student(self):
+        email = f"TEST_pub_{uuid.uuid4().hex[:8]}@siwes.edu"
+        r = requests.post(f"{API}/auth/register", json={
+            "email": email, "password": "Password@123",
+            "name": "Attempted Sup", "role": "supervisor",  # should be ignored
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["role"] == "student"
+
+    def test_coordinator_creates_supervisor_with_temp_pw(self):
+        s, _ = _session("coordinator")
+        email = f"TEST_sup_{uuid.uuid4().hex[:6]}@siwes.edu"
+        r = s.post(f"{API}/users", json={
+            "email": email, "name": "TEST New Sup", "role": "supervisor",
+            "phone": "+2340000", "staff_id": "TST-01",
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["role"] == "supervisor"
+        assert body["must_change_password"] is True
+        assert body.get("temporary_password", "").startswith("Temp@")
+
+    def test_coordinator_cannot_create_coordinator_or_admin(self):
+        s, _ = _session("coordinator")
+        for bad in ("coordinator", "admin"):
+            r = s.post(f"{API}/users", json={
+                "email": f"TEST_{bad}_{uuid.uuid4().hex[:6]}@x.com",
+                "name": "X", "role": bad,
+            })
+            assert r.status_code == 403, f"role={bad} got {r.status_code}"
+
+    def test_admin_creates_coordinator_and_supervisor(self):
+        s, _ = _session("admin")
+        for role in ("coordinator", "supervisor"):
+            email = f"TEST_{role}_{uuid.uuid4().hex[:6]}@siwes.edu"
+            r = s.post(f"{API}/users", json={
+                "email": email, "name": f"T {role}", "role": role,
+            })
+            assert r.status_code == 200, r.text
+            assert r.json()["role"] == role
+            assert r.json()["temporary_password"].startswith("Temp@")
+
+    def test_admin_cannot_create_admin(self):
+        s, _ = _session("admin")
+        r = s.post(f"{API}/users", json={
+            "email": f"TEST_ad_{uuid.uuid4().hex[:6]}@x.com",
+            "name": "X", "role": "admin",
+        })
+        assert r.status_code == 403
+
+    def test_coordinator_edit_and_delete_supervisor(self):
+        s, _ = _session("coordinator")
+        # create
+        email = f"TEST_ed_{uuid.uuid4().hex[:6]}@siwes.edu"
+        c = s.post(f"{API}/users", json={
+            "email": email, "name": "Edit Me", "role": "supervisor",
+        }).json()
+        uid = c["id"]
+        # edit
+        r = s.put(f"{API}/users/{uid}", json={"name": "Edited Name", "phone": "+2341", "staff_id": "S9"})
+        assert r.status_code == 200
+        assert r.json()["name"] == "Edited Name"
+        # coordinator cannot edit non-supervisor: try editing admin
+        admins = s.get(f"{API}/users", params={"role": "admin"}).json()
+        if admins:
+            r2 = s.put(f"{API}/users/{admins[0]['id']}", json={"name": "no"})
+            assert r2.status_code == 403
+        # delete
+        r3 = s.delete(f"{API}/users/{uid}")
+        assert r3.status_code == 200
+
+    def test_admin_cannot_delete_admin(self):
+        s, _ = _session("admin")
+        admins = s.get(f"{API}/users", params={"role": "admin"}).json()
+        assert admins
+        r = s.delete(f"{API}/users/{admins[0]['id']}")
+        assert r.status_code == 403
+
+    def test_reset_password_sets_must_change(self):
+        s, _ = _session("coordinator")
+        email = f"TEST_rp_{uuid.uuid4().hex[:6]}@siwes.edu"
+        c = s.post(f"{API}/users", json={
+            "email": email, "name": "ResetMe", "role": "supervisor",
+        }).json()
+        uid = c["id"]
+        r = s.patch(f"{API}/users/{uid}/reset-password", json={})
+        assert r.status_code == 200
+        assert r.json()["new_password"].startswith("Temp@")
+        # cleanup
+        s.delete(f"{API}/users/{uid}")
+
+
+class TestChangePassword:
+    def test_change_password_flow(self):
+        # create a new supervisor via coordinator
+        sc, _ = _session("coordinator")
+        email = f"TEST_cp_{uuid.uuid4().hex[:6]}@siwes.edu"
+        created = sc.post(f"{API}/users", json={
+            "email": email, "name": "CP User", "role": "supervisor",
+        }).json()
+        temp_pw = created["temporary_password"]
+        uid = created["id"]
+
+        # login as new supervisor
+        s = requests.Session()
+        r = s.post(f"{API}/auth/login", json={"email": email, "password": temp_pw})
+        assert r.status_code == 200
+        assert r.json()["must_change_password"] is True
+
+        # wrong current password
+        rw = s.post(f"{API}/auth/change-password", json={
+            "current_password": "WrongPass", "new_password": "NewPass@123"})
+        assert rw.status_code == 400
+
+        # correct
+        rc = s.post(f"{API}/auth/change-password", json={
+            "current_password": temp_pw, "new_password": "NewPass@123"})
+        assert rc.status_code == 200
+
+        me = s.get(f"{API}/auth/me").json()
+        assert me["must_change_password"] is False
+
+        # cleanup
+        sc.delete(f"{API}/users/{uid}")
+
+
+class TestAssessments:
+    def test_assessment_flow_upsert_and_forbidden(self):
+        # supervisor submits for allocated student
+        sv, _ = _session("supervisor")
+        sc, _ = _session("coordinator")
+        students = sc.get(f"{API}/users", params={"role": "student"}).json()
+        stu = next(u for u in students if u["email"] == "student@siwes.edu")
+
+        r = sv.post(f"{API}/assessments", json={
+            "student_id": stu["id"], "rating": 5,
+            "punctuality": 4, "teamwork": 5, "technical_skill": 4,
+            "feedback": "TEST_ Great work"
+        })
+        assert r.status_code == 200, r.text
+
+        # upsert: second submit updates
+        r2 = sv.post(f"{API}/assessments", json={
+            "student_id": stu["id"], "rating": 3, "feedback": "TEST_ update"
+        })
+        assert r2.status_code == 200
+
+        # student sees own
+        ss, _ = _session("student")
+        listing = ss.get(f"{API}/assessments/student/{stu['id']}").json()
+        assert isinstance(listing, list) and len(listing) >= 1
+        # after upsert only 1 record for this supervisor
+        mine = [a for a in listing if a["supervisor_id"]]
+        assert any(a["rating"] == 3 for a in mine)
+
+        # supervisor forbidden for unallocated student: create fresh student
+        email = f"TEST_std_{uuid.uuid4().hex[:6]}@siwes.edu"
+        reg = requests.post(f"{API}/auth/register", json={
+            "email": email, "password": "Password@123", "name": "Unalloc"
+        })
+        new_stu_id = reg.json()["id"]
+        rf = sv.post(f"{API}/assessments", json={
+            "student_id": new_stu_id, "rating": 5
+        })
+        assert rf.status_code == 403
+
+
+class TestSessions:
+    def test_session_create_activate_delete(self):
+        s, _ = _session("coordinator")
+        # create active
+        r = s.post(f"{API}/sessions", json={
+            "name": f"TEST_{uuid.uuid4().hex[:4]}",
+            "start_date": "2026-02-01", "end_date": "2026-08-01",
+            "active": True
+        })
+        assert r.status_code == 200, r.text
+        sid = r.json()["id"]
+
+        # verify only one active
+        listing = s.get(f"{API}/sessions").json()
+        actives = [x for x in listing if x["active"]]
+        assert len(actives) == 1 and actives[0]["id"] == sid
+
+        # create another inactive
+        r2 = s.post(f"{API}/sessions", json={
+            "name": f"TEST_{uuid.uuid4().hex[:4]}",
+            "start_date": "2026-02-01", "end_date": "2026-08-01",
+            "active": False
+        })
+        sid2 = r2.json()["id"]
+
+        # activate the second
+        ra = s.patch(f"{API}/sessions/{sid2}/activate")
+        assert ra.status_code == 200
+        listing2 = s.get(f"{API}/sessions").json()
+        actives2 = [x for x in listing2 if x["active"]]
+        assert len(actives2) == 1 and actives2[0]["id"] == sid2
+
+        # delete both
+        assert s.delete(f"{API}/sessions/{sid}").status_code == 200
+        assert s.delete(f"{API}/sessions/{sid2}").status_code == 200
+
+
+class TestAuditLogs:
+    def test_admin_can_list_audit_logs(self):
+        s, _ = _session("admin")
+        r = s.get(f"{API}/audit-logs")
+        assert r.status_code == 200
+        entries = r.json()
+        assert isinstance(entries, list)
+        actions = {e["action"] for e in entries}
+        # should have at least some seed activity from previous tests
+        assert any(a.startswith("user.create") or a == "assessment.submit"
+                   or a == "auth.change_password" or a == "student.self_register"
+                   for a in actions), actions
+
+    def test_non_admin_cannot_list_audit_logs(self):
+        for role in ("coordinator", "supervisor", "student"):
+            s, _ = _session(role)
+            r = s.get(f"{API}/audit-logs")
+            assert r.status_code == 403, f"{role} got {r.status_code}"

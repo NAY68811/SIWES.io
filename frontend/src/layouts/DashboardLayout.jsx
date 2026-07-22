@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   House, MapPin, ClipboardText, Users, Buildings, GraduationCap,
   ChartBar, BellRinging, UserCircle, SignOut, List, X, Notepad, Compass, FileText,
+  Calendar, ShieldCheck, Star,
 } from "@phosphor-icons/react";
 import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -22,6 +23,7 @@ function navFor(role) {
       { to: "/app/students", icon: GraduationCap, label: "My Students" },
       { to: "/app/visits", icon: MapPin, label: "Visits & GPS" },
       { to: "/app/reviews", icon: ClipboardText, label: "Logbook Review" },
+      { to: "/app/assessments", icon: Star, label: "Assessments" },
     ],
     coordinator: [
       { to: "/app/coord/students", icon: GraduationCap, label: "Students" },
@@ -29,16 +31,19 @@ function navFor(role) {
       { to: "/app/coord/companies", icon: Buildings, label: "Companies" },
       { to: "/app/coord/allocations", icon: Compass, label: "Allocations" },
       { to: "/app/coord/departments", icon: List, label: "Departments" },
+      { to: "/app/coord/sessions", icon: Calendar, label: "Sessions" },
       { to: "/app/coord/reports", icon: FileText, label: "Reports" },
     ],
     admin: [
-      { to: "/app/coord/students", icon: GraduationCap, label: "Students" },
+      { to: "/app/admin/coordinators", icon: ShieldCheck, label: "Coordinators" },
       { to: "/app/coord/supervisors", icon: Users, label: "Supervisors" },
+      { to: "/app/coord/students", icon: GraduationCap, label: "Students" },
       { to: "/app/coord/companies", icon: Buildings, label: "Companies" },
       { to: "/app/coord/allocations", icon: Compass, label: "Allocations" },
       { to: "/app/coord/departments", icon: List, label: "Departments" },
+      { to: "/app/coord/sessions", icon: Calendar, label: "Sessions" },
       { to: "/app/coord/reports", icon: FileText, label: "Reports" },
-      { to: "/app/coord/reports", icon: ChartBar, label: "Analytics" },
+      { to: "/app/admin/audit", icon: ChartBar, label: "Audit Logs" },
     ],
   }[role] || [];
   return [...base, ...rest];

@@ -91,8 +91,16 @@ def serialize_user(u: dict) -> dict:
         "matric_no": u.get("matric_no"),
         "staff_id": u.get("staff_id"),
         "level": u.get("level"),
+        "must_change_password": bool(u.get("must_change_password", False)),
         "created_at": u.get("created_at"),
     }
+
+async def audit(actor_id, action: str, target: str = "", meta: dict = None):
+    """Append an audit log record for admin review."""
+    await db.audit_logs.insert_one({
+        "actor_id": actor_id, "action": action, "target": target,
+        "meta": meta or {}, "created_at": iso(now_utc()),
+    })
 
 def haversine_m(lat1, lon1, lat2, lon2) -> float:
     R = 6371000.0
@@ -132,15 +140,27 @@ def require_roles(*roles: str):
 
 # ---------- Pydantic Models ----------
 class RegisterIn(BaseModel):
+    """Public self-registration is restricted to students only."""
     email: EmailStr
     password: str = Field(min_length=6)
     name: str
-    role: Role = "student"
     phone: Optional[str] = None
     matric_no: Optional[str] = None
-    staff_id: Optional[str] = None
     department_id: Optional[str] = None
     level: Optional[str] = None
+
+class AdminCreateUserIn(BaseModel):
+    """Coordinator creates supervisors; Admin creates coordinators/supervisors."""
+    email: EmailStr
+    name: str
+    role: Role
+    phone: Optional[str] = None
+    staff_id: Optional[str] = None
+    department_id: Optional[str] = None
+
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6)
 
 class LoginIn(BaseModel):
     email: EmailStr
@@ -197,6 +217,14 @@ class AllocationManual(BaseModel):
     student_id: str
     supervisor_id: str
 
+class AssessmentIn(BaseModel):
+    student_id: str
+    rating: int = Field(ge=1, le=5)
+    punctuality: Optional[int] = Field(default=None, ge=1, le=5)
+    teamwork: Optional[int] = Field(default=None, ge=1, le=5)
+    technical_skill: Optional[int] = Field(default=None, ge=1, le=5)
+    feedback: Optional[str] = None
+
 # ---------- Startup ----------
 @app.on_event("startup")
 async def startup():
@@ -207,6 +235,8 @@ async def startup():
     await db.visits.create_index("student_id")
     await db.allocations.create_index("student_id", unique=True)
     await db.notifications.create_index([("user_id", 1), ("created_at", -1)])
+    await db.assessments.create_index([("student_id", 1), ("supervisor_id", 1)], unique=True)
+    await db.audit_logs.create_index([("created_at", -1)])
     await seed_defaults()
     logger.info("SIWES backend ready.")
 
@@ -298,11 +328,11 @@ async def register(body: RegisterIn, response: Response):
         "email": email,
         "password_hash": hash_password(body.password),
         "name": body.name,
-        "role": body.role,
+        "role": "student",  # public self-registration is always student
         "phone": body.phone,
         "matric_no": body.matric_no,
-        "staff_id": body.staff_id,
         "level": body.level,
+        "must_change_password": False,
         "created_at": iso(now_utc()),
     }
     if body.department_id:
@@ -310,9 +340,21 @@ async def register(body: RegisterIn, response: Response):
         except Exception: pass
     r = await db.users.insert_one(doc)
     uid = str(r.inserted_id)
-    set_auth_cookies(response, make_access(uid, body.role), make_refresh(uid))
+    set_auth_cookies(response, make_access(uid, "student"), make_refresh(uid))
     doc["_id"] = r.inserted_id
+    await audit(r.inserted_id, "student.self_register", email)
     return serialize_user(doc)
+
+@api.post("/auth/change-password")
+async def change_password(body: ChangePasswordIn, user: dict = Depends(get_current_user)):
+    if not verify_password(body.current_password, user["password_hash"]):
+        raise HTTPException(400, "Current password is incorrect")
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": hash_password(body.new_password),
+                  "must_change_password": False}})
+    await audit(user["_id"], "auth.change_password")
+    return {"ok": True}
 
 @api.post("/auth/login")
 async def login(body: LoginIn, response: Response):
@@ -358,27 +400,111 @@ async def list_sessions():
 @api.post("/sessions")
 async def create_session(body: SessionIn,
                          user: dict = Depends(require_roles("coordinator", "admin"))):
+    if body.active:
+        await db.sessions.update_many({}, {"$set": {"active": False}})
     r = await db.sessions.insert_one({**body.model_dump(), "created_at": iso(now_utc())})
     return {"id": str(r.inserted_id), **body.model_dump()}
 
+@api.patch("/sessions/{sid}/activate")
+async def activate_session(sid: str,
+                           user: dict = Depends(require_roles("coordinator", "admin"))):
+    await db.sessions.update_many({}, {"$set": {"active": False}})
+    await db.sessions.update_one({"_id": ObjectId(sid)}, {"$set": {"active": True}})
+    return {"ok": True}
+
+@api.delete("/sessions/{sid}")
+async def delete_session(sid: str,
+                         user: dict = Depends(require_roles("coordinator", "admin"))):
+    await db.sessions.delete_one({"_id": ObjectId(sid)})
+    return {"ok": True}
+
 # ---------- Users management ----------
+def _can_create_role(actor_role: str, target_role: str) -> bool:
+    if actor_role == "admin":
+        return target_role in ("coordinator", "supervisor")
+    if actor_role == "coordinator":
+        return target_role == "supervisor"
+    return False
+
 @api.get("/users")
 async def list_users(role: Optional[str] = None,
                      user: dict = Depends(require_roles("coordinator", "admin"))):
     q = {"role": role} if role else {}
     return [serialize_user(u) async for u in db.users.find(q).sort("created_at", -1)]
 
+@api.post("/users")
+async def create_user(body: AdminCreateUserIn,
+                      user: dict = Depends(require_roles("coordinator", "admin"))):
+    """Coordinator creates supervisors. Admin creates coordinators or supervisors.
+    A temporary password is generated and returned once; user must change it on first login."""
+    if not _can_create_role(user["role"], body.role):
+        raise HTTPException(403, f"{user['role']} cannot create role '{body.role}'")
+    email = body.email.lower()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(400, "Email already exists")
+    temp_password = f"Temp@{secrets.token_hex(4)}"
+    doc = {
+        "email": email,
+        "password_hash": hash_password(temp_password),
+        "name": body.name, "role": body.role,
+        "phone": body.phone, "staff_id": body.staff_id,
+        "must_change_password": True,
+        "created_at": iso(now_utc()),
+    }
+    if body.department_id:
+        try: doc["department_id"] = ObjectId(body.department_id)
+        except Exception: pass
+    r = await db.users.insert_one(doc)
+    await audit(user["_id"], f"user.create.{body.role}", email)
+    return {**serialize_user({**doc, "_id": r.inserted_id}),
+            "temporary_password": temp_password}
+
+@api.put("/users/{uid}")
+async def edit_user(uid: str, body: dict,
+                    user: dict = Depends(require_roles("coordinator", "admin"))):
+    target = await db.users.find_one({"_id": ObjectId(uid)})
+    if not target:
+        raise HTTPException(404, "User not found")
+    # Coordinators can only edit supervisors
+    if user["role"] == "coordinator" and target["role"] != "supervisor":
+        raise HTTPException(403, "Coordinators can only edit supervisors")
+    allowed = {"name", "phone", "staff_id", "department_id", "level", "matric_no"}
+    update = {k: v for k, v in body.items() if k in allowed}
+    if "department_id" in update and update["department_id"]:
+        try: update["department_id"] = ObjectId(update["department_id"])
+        except Exception: update.pop("department_id")
+    if update:
+        await db.users.update_one({"_id": target["_id"]}, {"$set": update})
+    await audit(user["_id"], "user.edit", target["email"], {"fields": list(update.keys())})
+    fresh = await db.users.find_one({"_id": target["_id"]})
+    return serialize_user(fresh)
+
 @api.delete("/users/{uid}")
-async def delete_user(uid: str, user: dict = Depends(require_roles("admin"))):
-    await db.users.delete_one({"_id": ObjectId(uid)})
+async def delete_user(uid: str, user: dict = Depends(require_roles("coordinator", "admin"))):
+    target = await db.users.find_one({"_id": ObjectId(uid)})
+    if not target:
+        raise HTTPException(404, "User not found")
+    if user["role"] == "coordinator" and target["role"] != "supervisor":
+        raise HTTPException(403, "Coordinators can only delete supervisors")
+    if target["role"] == "admin":
+        raise HTTPException(403, "Admin accounts cannot be deleted via API")
+    await db.users.delete_one({"_id": target["_id"]})
+    await audit(user["_id"], "user.delete", target["email"])
     return {"ok": True}
 
 @api.patch("/users/{uid}/reset-password")
 async def reset_password(uid: str, body: dict,
                          user: dict = Depends(require_roles("coordinator", "admin"))):
-    new_pw = body.get("password") or "Password@123"
-    await db.users.update_one({"_id": ObjectId(uid)},
-                              {"$set": {"password_hash": hash_password(new_pw)}})
+    target = await db.users.find_one({"_id": ObjectId(uid)})
+    if not target:
+        raise HTTPException(404, "User not found")
+    if user["role"] == "coordinator" and target["role"] not in ("supervisor", "student"):
+        raise HTTPException(403, "Not permitted")
+    new_pw = body.get("password") or f"Temp@{secrets.token_hex(4)}"
+    await db.users.update_one({"_id": target["_id"]},
+        {"$set": {"password_hash": hash_password(new_pw),
+                  "must_change_password": True}})
+    await audit(user["_id"], "user.reset_password", target["email"])
     return {"ok": True, "new_password": new_pw}
 
 @api.patch("/users/me")
@@ -772,6 +898,69 @@ async def report_summary(user: dict = Depends(require_roles("coordinator", "admi
         s["visits_verified"] = await db.visits.count_documents(
             {"student_id": ObjectId(s["id"]), "status": "verified"})
     return students
+
+# ---------- Assessments ----------
+@api.post("/assessments")
+async def create_assessment(body: AssessmentIn,
+                            user: dict = Depends(require_roles("supervisor"))):
+    """Supervisor submits an end-of-SIWES assessment for a student."""
+    # Ensure the student is actually allocated to this supervisor
+    alloc = await db.allocations.find_one({
+        "student_id": ObjectId(body.student_id), "supervisor_id": user["_id"]})
+    if not alloc:
+        raise HTTPException(403, "Student is not assigned to you")
+    doc = {**body.model_dump(),
+           "student_id": ObjectId(body.student_id),
+           "supervisor_id": user["_id"],
+           "created_at": iso(now_utc())}
+    await db.assessments.update_one(
+        {"student_id": ObjectId(body.student_id), "supervisor_id": user["_id"]},
+        {"$set": doc}, upsert=True)
+    await db.notifications.insert_one({
+        "user_id": ObjectId(body.student_id),
+        "title": "Assessment submitted",
+        "body": f"{user['name']} submitted your SIWES assessment (rating {body.rating}/5).",
+        "read": False, "created_at": iso(now_utc())})
+    await audit(user["_id"], "assessment.submit", body.student_id, {"rating": body.rating})
+    return {"ok": True}
+
+@api.get("/assessments/student/{sid}")
+async def get_assessment(sid: str, user: dict = Depends(get_current_user)):
+    """Student sees their own; supervisor sees theirs; coordinator/admin see all."""
+    q = {"student_id": ObjectId(sid)}
+    if user["role"] == "student" and str(user["_id"]) != sid:
+        raise HTTPException(403, "Not allowed")
+    if user["role"] == "supervisor":
+        q["supervisor_id"] = user["_id"]
+    out = []
+    async for a in db.assessments.find(q):
+        out.append({
+            "id": str(a["_id"]),
+            "student_id": str(a["student_id"]),
+            "supervisor_id": str(a["supervisor_id"]),
+            "rating": a["rating"],
+            "punctuality": a.get("punctuality"),
+            "teamwork": a.get("teamwork"),
+            "technical_skill": a.get("technical_skill"),
+            "feedback": a.get("feedback"),
+            "created_at": a["created_at"],
+        })
+    return out
+
+# ---------- Audit logs (admin) ----------
+@api.get("/audit-logs")
+async def list_audit(limit: int = 100, user: dict = Depends(require_roles("admin"))):
+    out = []
+    async for a in db.audit_logs.find().sort("created_at", -1).limit(limit):
+        actor = await db.users.find_one({"_id": a["actor_id"]}) if a.get("actor_id") else None
+        out.append({
+            "id": str(a["_id"]),
+            "actor_email": actor.get("email") if actor else "system",
+            "actor_role": actor.get("role") if actor else "system",
+            "action": a["action"], "target": a.get("target", ""),
+            "meta": a.get("meta", {}), "created_at": a["created_at"],
+        })
+    return out
 
 # Health
 @api.get("/")

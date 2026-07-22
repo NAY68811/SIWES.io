@@ -1,14 +1,35 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { UserCircle, Envelope, Phone, IdentificationBadge } from "@phosphor-icons/react";
+import { useAuth } from "@/context/AuthContext";
+import { UserCircle, Envelope, Phone, IdentificationBadge, Star } from "@phosphor-icons/react";
+
+function StarRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="flex gap-0.5">
+        {[1,2,3,4,5].map(n => (
+          <Star key={n} size={16} weight={n <= (value || 0) ? "fill" : "regular"}
+            className={n <= (value || 0) ? "text-amber-400" : "text-muted-foreground/30"} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function MySupervisor() {
+  const { user } = useAuth();
   const [sup, setSup] = useState(null);
   const [visits, setVisits] = useState([]);
+  const [assessment, setAssessment] = useState(null);
+
   useEffect(() => {
     api.get("/allocations/my-supervisor").then(r => setSup(r.data)).catch(() => {});
     api.get("/visits/mine").then(r => setVisits(r.data)).catch(() => {});
-  }, []);
+    if (user?.id) {
+      api.get(`/assessments/student/${user.id}`).then(r => setAssessment(r.data[0] || null)).catch(() => {});
+    }
+  }, [user]);
 
   return (
     <div className="space-y-6" data-testid="my-supervisor">
@@ -34,6 +55,24 @@ export default function MySupervisor() {
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           <UserCircle size={32} className="mx-auto mb-2" />
           No supervisor assigned yet. Please wait for your coordinator to allocate one.
+        </div>
+      )}
+
+      {assessment && (
+        <div className="rounded-xl border border-border bg-card p-6 max-w-xl">
+          <h3 className="font-bold text-lg mb-4">My assessment</h3>
+          <div className="space-y-2">
+            <StarRow label="Overall rating" value={assessment.rating} />
+            <StarRow label="Punctuality" value={assessment.punctuality} />
+            <StarRow label="Teamwork" value={assessment.teamwork} />
+            <StarRow label="Technical skill" value={assessment.technical_skill} />
+          </div>
+          {assessment.feedback && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Feedback</div>
+              <p className="text-sm whitespace-pre-wrap">{assessment.feedback}</p>
+            </div>
+          )}
         </div>
       )}
 

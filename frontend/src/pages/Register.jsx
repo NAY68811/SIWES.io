@@ -14,8 +14,8 @@ export default function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
   const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "student",
-    phone: "", matric_no: "", staff_id: "", department_id: "", level: "400",
+    name: "", email: "", password: "", phone: "",
+    matric_no: "", department_id: "", level: "400",
   });
   const [depts, setDepts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,8 +44,10 @@ export default function Register() {
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="flex items-center justify-center p-6 lg:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Set up your SIWES profile in a minute.</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Student registration</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Only students self-register. Supervisor and coordinator accounts are created by your SIWES office.
+          </p>
 
           <form onSubmit={submit} className="mt-6 space-y-4" data-testid="register-form">
             <div className="grid grid-cols-2 gap-3">
@@ -62,17 +64,6 @@ export default function Register() {
                 <Input type="password" value={form.password} required onChange={upd("password")} data-testid="reg-password" />
               </div>
               <div>
-                <Label>Role</Label>
-                <Select value={form.role} onValueChange={upd("role")}>
-                  <SelectTrigger data-testid="reg-role"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                    <SelectItem value="coordinator">Coordinator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
                 <Label>Department</Label>
                 <Select value={form.department_id} onValueChange={upd("department_id")}>
                   <SelectTrigger data-testid="reg-department"><SelectValue placeholder="Select" /></SelectTrigger>
@@ -85,32 +76,22 @@ export default function Register() {
                 <Label>Phone</Label>
                 <Input value={form.phone} onChange={upd("phone")} data-testid="reg-phone" />
               </div>
-              {form.role === "student" && (
-                <>
-                  <div>
-                    <Label>Matric No.</Label>
-                    <Input value={form.matric_no} onChange={upd("matric_no")} data-testid="reg-matric" />
-                  </div>
-                  <div>
-                    <Label>Level</Label>
-                    <Select value={form.level} onValueChange={upd("level")}>
-                      <SelectTrigger data-testid="reg-level"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {["200","300","400","500"].map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-              {form.role === "supervisor" && (
-                <div className="col-span-2">
-                  <Label>Staff ID</Label>
-                  <Input value={form.staff_id} onChange={upd("staff_id")} data-testid="reg-staff-id" />
-                </div>
-              )}
+              <div>
+                <Label>Matric No.</Label>
+                <Input value={form.matric_no} onChange={upd("matric_no")} data-testid="reg-matric" />
+              </div>
+              <div>
+                <Label>Level</Label>
+                <Select value={form.level} onValueChange={upd("level")}>
+                  <SelectTrigger data-testid="reg-level"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["200","300","400","500"].map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button type="submit" disabled={loading} className="w-full" data-testid="register-submit">
-              {loading ? "Creating…" : "Create account"}
+              {loading ? "Creating…" : "Create student account"}
             </Button>
           </form>
           <p className="mt-4 text-sm text-muted-foreground">
