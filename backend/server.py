@@ -74,10 +74,12 @@ def make_refresh(user_id: str) -> str:
         JWT_SECRET, algorithm=JWT_ALG)
 
 def set_auth_cookies(resp: Response, access: str, refresh: str) -> None:
-    resp.set_cookie("access_token", access, httponly=True, secure=True,
-                    samesite="none", max_age=3600, path="/")
-    resp.set_cookie("refresh_token", refresh, httponly=True, secure=True,
-                    samesite="none", max_age=604800, path="/")
+    resp.set_cookie("access_token", access, httponly=True, secure=False, 
+                    samesite="lax", max_age=3600, path="/")
+
+    resp.set_cookie("refresh_token", refresh, httponly=True, secure=False,
+                    samesite="lax", max_age=604800, path="/")
+
 
 def clear_auth_cookies(resp: Response) -> None:
     resp.delete_cookie("access_token", path="/")
@@ -463,7 +465,7 @@ async def create_user(body: AdminCreateUserIn,
     r = await db.users.insert_one(doc)
     await audit(user["_id"], f"user.create.{body.role}", email)
     # Send credentials email (fire-and-forget — surface temp password inline as fallback)
-    frontend_url = os.environ.get("FRONTEND_URL", "https://siwes-supervisor.preview.emergentagent.com")
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
     email_sent = await send_email(
         recipient=email,
         subject=f"Your SIWES.io {body.role} account is ready",

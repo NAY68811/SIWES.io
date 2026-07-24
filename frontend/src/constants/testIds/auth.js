@@ -1,15 +1,17 @@
 // Test IDs for the auth feature (login, register, password reset, logout).
-// Add new keys here as you wire up additional auth UI; see ./index.js for
-// the recipe to add a new feature file.
+// Add new keys here as you wire up additional auth UI.
 //
-// Directive:
-//   - Keys are camelCase, values are kebab-case shaped as `<feature>-<element>`
-//     (or `<feature>-<element>-<qualifier>` when an element repeats). Examples:
-//     'login-submit-button', 'cart-quantity-input', 'product-card-image'.
-//   - Reference them in JSX as `data-testid={LOGIN.submitButton}`.
+// Naming convention:
+// - Keys use camelCase.
+// - Values use kebab-case in the format:
+//   <feature>-<element>
+// Example:
+//   login-submit-button
+//   register-email-input
+//   logout-button
 //
-// Why kebab-case values: required by qabot's CSS-attribute selector matcher
-// and the lint rule `emergent(kebab-case-testid)`.
+// Reference them in JSX as:
+// data-testid={LOGIN.submitButton}
 
 export const LOGIN = {
 	emailInput: 'login-email-input',

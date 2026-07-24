@@ -1,4 +1,4 @@
-"""Emergent-managed object storage service."""
+"""Object storage service for uploaded files."""
 import os
 import logging
 import uuid
