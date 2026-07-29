@@ -46,7 +46,7 @@ export default function Register() {
         <div className="w-full max-w-md">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Student registration</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Only students self-register. Supervisor and coordinator accounts are created by your SIWES office.
+            Students can create their own accounts. Supervisor and Coordinator accounts are created by the SIWES Office.
           </p>
 
           <form onSubmit={submit} className="mt-6 space-y-4" data-testid="register-form">

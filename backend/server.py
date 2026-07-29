@@ -118,22 +118,31 @@ def haversine_m(lat1, lon1, lat2, lon2) -> float:
 # ---------- Auth Dependency ----------
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get("access_token")
+
     if not token:
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             token = auth[7:]
+
     if not token:
         raise HTTPException(401, "Not authenticated")
+
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+
         if payload.get("type") != "access":
             raise HTTPException(401, "Invalid token type")
+
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+
         if not user:
             raise HTTPException(401, "User not found")
+
         return user
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(401, "Token expired")
+
     except jwt.InvalidTokenError:
         raise HTTPException(401, "Invalid token")
 
@@ -287,15 +296,15 @@ async def seed_defaults():
                       os.environ.get("ADMIN_PASSWORD", "Admin@1234"),
                       "System Admin", "admin")
     await ensure_user("coordinator@siwes.edu", "Password@123",
-                      "Dr. Ada Coordinator", "coordinator",
-                      {"phone": "+2348011111111", "department_id": dept_id})
+                      "Dr. Fatima Coordinator", "coordinator",
+                      {"phone": "+2348024049342", "department_id": dept_id})
     sup = await ensure_user("supervisor@siwes.edu", "Password@123",
                       "Dr. Ben Supervisor", "supervisor",
-                      {"phone": "+2348022222222", "staff_id": "STF-001",
+                      {"phone": "+2348024049342", "staff_id": "STF-001",
                        "department_id": dept_id, "capacity": 10})
     stu = await ensure_user("student@siwes.edu", "Password@123",
-                      "Chidi Student", "student",
-                      {"phone": "+2348033333333", "matric_no": "CSC/2022/001",
+                      "Yusuf Student", "student",
+                      {"phone": "+2348068811750", "matric_no": "20/5543U/1",
                        "department_id": dept_id, "level": "400"})
     # ensure demo allocation
     await db.allocations.update_one(
@@ -310,14 +319,14 @@ async def seed_defaults():
     if not await db.companies.find_one({"student_id": stu["_id"]}):
         await db.companies.insert_one({
             "student_id": stu["_id"],
-            "name": "TechForge Innovations Ltd",
-            "address": "12 Adeola Odeku Street, Victoria Island",
-            "state": "Lagos", "lga": "Eti-Osa",
-            "latitude": 6.4281, "longitude": 3.4219,
-            "industry": "Software Development",
-            "supervisor_name": "Engr. Musa Bello",
+            "name": "nHub Foundation, Jos",
+            "address": "2nd Floor TAEN Business Complex Opposite former NITEL Office, Old Airport Junction, Jos, Plateau State, Nigeria.",
+            "state": "Plateau", "lga": "Jos South",
+            "latitude": 9.9042, "longitude": 8.8921,
+            "industry": "Web Development",
+            "supervisor_name": "Mr. Bashir Sheidu",
             "supervisor_phone": "+2348099999999",
-            "supervisor_email": "musa@techforge.ng",
+            "supervisor_email": "contact@nhubfoundations.org",
             "status": "approved",
             "created_at": iso(now_utc()),
         })
@@ -367,11 +376,14 @@ async def change_password(body: ChangePasswordIn, user: dict = Depends(get_curre
 @api.post("/auth/login")
 async def login(body: LoginIn, response: Response):
     user = await db.users.find_one({"email": body.email.lower()})
+
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(401, "Invalid email or password")
+
     uid = str(user["_id"])
     set_auth_cookies(response, make_access(uid, user["role"]), make_refresh(uid))
     return serialize_user(user)
+
 
 @api.post("/auth/logout")
 async def logout(response: Response):
@@ -1189,8 +1201,13 @@ app.include_router(api)
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://10.119.120.196:3000",
+        "http://172.27.223.196:3000",
+    ],
     allow_credentials=True,
-    allow_origin_regex=".*",
     allow_methods=["*"],
     allow_headers=["*"],
 )

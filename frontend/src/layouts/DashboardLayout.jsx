@@ -78,9 +78,21 @@ export default function DashboardLayout() {
   const doLogout = async () => { await logout(); nav("/login"); };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="h-screen flex overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className={`${open ? "block" : "hidden"} lg:block fixed lg:static inset-y-0 left-0 z-40 w-72 border-r border-border bg-card`}>
+      <aside
+        className={`
+          ${open ? "block" : "hidden"}
+          lg:block
+          fixed inset-y-0 left-0
+          z-40
+          w-72
+          h-screen
+          flex flex-col
+          border-r border-border
+          bg-card
+        `}
+      >
         <div className="h-16 flex items-center justify-between px-5 border-b border-border">
           <Link to="/app" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-black">S</div>
@@ -88,7 +100,7 @@ export default function DashboardLayout() {
           </Link>
           <button className="lg:hidden" onClick={() => setOpen(false)}><X /></button>
         </div>
-        <nav className="p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {links.map(({ to, icon: Icon, label, end }) => (
             <NavLink key={to} to={to} end={end}
               onClick={() => setOpen(false)}
@@ -104,11 +116,11 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border bg-card">
+        <div className="absolute bottom-0 left-0 w-full p-3 border-t border-border bg-card">
           <div className="flex items-center gap-3 p-2 rounded-md">
             {user.avatar ? (
               <img
-                src={user.avatar.startsWith("http") ? user.avatar : `${process.env.REACT_APP_BACKEND_URL}${user.avatar}`}
+                src={user.avatar}
                 alt={user.name}
                 className="h-9 w-9 rounded-full object-cover border border-border"
               />
@@ -117,11 +129,18 @@ export default function DashboardLayout() {
                 {user.name?.[0]?.toUpperCase() || "U"}
               </div>
             )}
+
             <div className="text-sm flex-1 min-w-0">
               <div className="font-semibold truncate">{user.name}</div>
-              <div className="text-xs text-muted-foreground capitalize">{user.role}</div>
+              <div className="text-xs text-muted-foreground capitalize">
+                {user.role}
+              </div>
             </div>
-            <button onClick={doLogout} className="p-2 rounded-md hover:bg-accent" data-testid="logout-btn" aria-label="Logout">
+
+            <button
+              onClick={doLogout}
+              className="p-2 rounded-md hover:bg-accent"
+            >
               <SignOut size={16} />
             </button>
           </div>
@@ -129,7 +148,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 ml-72">
         <header className="h-16 border-b border-border glass sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-3">
             <button className="lg:hidden p-2" onClick={() => setOpen(true)} data-testid="mobile-menu"><List /></button>
@@ -149,7 +168,7 @@ export default function DashboardLayout() {
             <Link to="/app/profile"><Button variant="outline" size="sm" data-testid="nav-profile">Profile</Button></Link>
           </div>
         </header>
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto h-screen p-4 lg:p-8">
           <Outlet />
         </main>
       </div>

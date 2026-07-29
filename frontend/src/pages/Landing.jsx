@@ -6,9 +6,9 @@ import { Sun, Moon } from "lucide-react";
 
 const FEATURES = [
   { icon: MapPin, title: "GPS Visit Verification", body: "Supervisors' physical presence is verified against the student's approved SIWES site within a configurable radius." },
-  { icon: ClipboardText, title: "Digital Logbook", body: "Daily activities, hours, skills learned and challenges — with image uploads and one-click supervisor approvals." },
+  { icon: ClipboardText, title: "Digital Logbook", body: "Daily activities, hours, skills learned and challenges - with image uploads and one-click supervisor approvals." },
   { icon: Compass, title: "Smart Allocation", body: "Automatic supervisor-to-student matching by department, workload balancing and manual override." },
-  { icon: ShieldCheck, title: "Role-based Access", body: "Four distinct roles — Student, Supervisor, Coordinator and Admin — each with a tailored dashboard." },
+  { icon: ShieldCheck, title: "Role-based Access", body: "Four distinct roles - Student, Supervisor, Coordinator and Admin — each with a tailored dashboard." },
   { icon: GraduationCap, title: "Company Approval", body: "Coordinators approve student placement companies before SIWES starts, with map-verified coordinates." },
   { icon: ChartBar, title: "Reports & Analytics", body: "Live dashboards for attendance, visit outcomes and departmental performance summaries." },
 ];
@@ -47,11 +47,12 @@ export default function Landing() {
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             Live GPS verification · Digital logbook · v1.0
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
-            Supervise SIWES the way<br />it should have always been.
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
+            <span className="block">Supervise SIWES the way</span>
+            <span className="block">it should have always been.</span>
           </h1>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-            A single web platform for coordinators, supervisors and students —
+            A single web platform for coordinators, supervisors and students -
             from company approval and supervisor allocation to GPS-verified
             visits and daily digital logbooks.
           </p>
@@ -126,19 +127,18 @@ export default function Landing() {
         <div className="rounded-2xl border border-border p-10 lg:p-14 bg-card flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div>
             <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Ready to modernize your SIWES office?</h3>
-            <p className="mt-2 text-muted-foreground">Set up in minutes. Login with the demo accounts to explore all four roles.</p>
+            <p className="mt-2 text-muted-foreground">Set up in minutes. Create an account or login to get Started</p>
           </div>
           <div className="flex gap-3">
             <Link to="/register"><Button size="lg" className="rounded-full px-6" data-testid="cta-register">Create account</Button></Link>
-            <Link to="/login"><Button size="lg" variant="outline" className="rounded-full px-6" data-testid="cta-login">Demo login</Button></Link>
+            <Link to="/login"><Button size="lg" variant="outline" className="rounded-full px-6" data-testid="cta-login">Login</Button></Link>
           </div>
         </div>
       </section>
 
       <footer className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-8 text-sm text-muted-foreground flex flex-wrap justify-between gap-4">
-          <div>© {new Date().getFullYear()} SIWES.io — Built for academic use.</div>
-          <div>FastAPI · React · MongoDB · Leaflet</div>
+          <div>© {new Date().getFullYear()} SIWES.io - Built for academic use.</div>
         </div>
       </footer>
     </div>

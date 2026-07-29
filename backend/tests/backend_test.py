@@ -114,11 +114,11 @@ class TestCompanies:
     def test_student_create_updates_own_company(self):
         s, _ = _session("student")
         payload = {
-            "name": "TechForge Innovations Ltd",  # keep same demo
-            "address": "12 Adeola Odeku Street, Victoria Island",
-            "state": "Lagos", "lga": "Eti-Osa",
-            "latitude": 6.4281, "longitude": 3.4219,
-            "industry": "Software Development",
+            "name": "nHub Foundation, Jos",  # keep same demo
+            "address": "2nd Floor TAEN Business Complex Opposite former NITEL Office, Old Airport Junction, Jos, Plateau State, Nigeria.",
+            "state": "Plateau", "lga": "Jos South",
+            "latitude": 9.9042, "longitude": 8.8921,
+            "industry": "Web Development",
         }
         r = s.post(f"{API}/companies", json=payload)
         assert r.status_code == 200, r.text
@@ -129,9 +129,9 @@ class TestCompanies:
         # First re-submit as student so it's pending
         ss, _ = _session("student")
         ss.post(f"{API}/companies", json={
-            "name": "TechForge Innovations Ltd",
-            "address": "12 Adeola Odeku Street, Victoria Island",
-            "state": "Lagos", "latitude": 6.4281, "longitude": 3.4219,
+            "name": "nHub Foundation, Jos",
+            "address": "2nd Floor TAEN Business Complex Opposite former NITEL Office, Old Airport Junction, Jos, Plateau State, Nigeria.",
+            "state": "Plateau", "latitude": 9.9042, "longitude": 8.8921,
         })
         mine = ss.get(f"{API}/companies/mine").json()
         cid = mine["id"]

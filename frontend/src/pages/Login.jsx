@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { api, formatApiError } from "@/lib/api";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 
 // Demo password shown for exploration mode; matches backend seed defaults.
 // Not a real secret — the accounts are throwaway demo users in the seeded DB.
@@ -16,7 +17,7 @@ function DemoAccounts({ demos, onPick }) {
   if (!demos.length) return null;
   return (
     <div className="mt-8 rounded-xl border border-border bg-card p-4">
-      <div className="text-xs uppercase tracking-widest text-primary mb-3">Demo accounts</div>
+      <div className="text-xs uppercase tracking-widest text-primary mb-3">Demo accounts (For Project Evaluation)</div>
       <div className="grid grid-cols-2 gap-2 text-xs">
         {demos.map((d) => (
           <button key={d.role} onClick={() => onPick(d)}
@@ -37,13 +38,12 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [demos, setDemos] = useState([]);
-
-  useEffect(() => {
-    api.get("/demo-users")
-      .then((r) => setDemos(r.data))
-      .catch((err) => console.debug("demo-users fetch failed", err));
-  }, []);
+  const demos = [
+    { role: "Student", email: "student@siwes.edu" },
+    { role: "Supervisor", email: "supervisor@siwes.edu" },
+    { role: "Coordinator", email: "coordinator@siwes.edu" },
+    { role: "Admin", email: "admin@siwes.edu" },
+  ];
 
   const submit = async (e) => {
     e.preventDefault();
@@ -72,7 +72,7 @@ export default function Login() {
         </Link>
         <div className="relative">
           <h2 className="text-3xl font-extrabold tracking-tight">The supervision layer<br /> your SIWES office was missing.</h2>
-          <p className="mt-4 text-muted-foreground max-w-md">GPS-verified visits, digital logbooks, and one-click allocations — all in one place.</p>
+          <p className="mt-4 text-muted-foreground max-w-md">GPS-verified visits, digital logbooks, and one-click allocations - all in one place.</p>
           <DemoAccounts demos={demos} onPick={pickDemo} />
         </div>
         <div className="relative text-xs text-muted-foreground">© {new Date().getFullYear()} SIWES.io</div>
