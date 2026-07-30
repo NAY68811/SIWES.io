@@ -37,8 +37,6 @@ openpyxl==3.1.2
 # Images
 Pillow==11.3.0
 
-# CORS
-starlette==0.46.2
 
 # Development
 pytest==8.2.1
