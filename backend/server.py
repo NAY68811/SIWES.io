@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Literal, Any
 
 import bcrypt
-import jwt
+from jose import jwt
 from bson import ObjectId
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, UploadFile, File, Header
 from fastapi.responses import StreamingResponse
