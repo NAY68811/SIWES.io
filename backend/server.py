@@ -74,11 +74,11 @@ def make_refresh(user_id: str) -> str:
         JWT_SECRET, algorithm=JWT_ALG)
 
 def set_auth_cookies(resp: Response, access: str, refresh: str) -> None:
-    resp.set_cookie("access_token", access, httponly=True, secure=False, 
-                    samesite="lax", max_age=3600, path="/")
+    resp.set_cookie("access_token", access, httponly=True, secure=True, 
+                    samesite="none", max_age=3600, path="/")
 
-    resp.set_cookie("refresh_token", refresh, httponly=True, secure=False,
-                    samesite="lax", max_age=604800, path="/")
+    resp.set_cookie("refresh_token", refresh, httponly=True, secure=True,
+                    samesite="none", max_age=604800, path="/")
 
 
 def clear_auth_cookies(resp: Response) -> None:
