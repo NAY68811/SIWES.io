@@ -139,7 +139,7 @@ export default function DashboardLayout() {
 
             <button
               onClick={doLogout}
-              className="lg:hidden p-2 rounded-md hover:bg-accent"
+              className="p-2 rounded-md hover:bg-accent"
             >
               <SignOut size={16} />
             </button>
@@ -169,10 +169,10 @@ export default function DashboardLayout() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={toggle} className="h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent" data-testid="theme-toggle-dash" aria-label="Toggle theme">
+            <button onClick={toggle} className="h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent" data-testid="theme-toggle-dash">
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <Link to="/app/notifications" className="relative h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent" data-testid="nav-notifications">
+            <Link to="/app/notifications" className="relative h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent">
               <BellRinging size={16} />
               {unread > 0 && <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full h-4 min-w-4 px-1 grid place-items-center">{unread}</span>}
             </Link>
