@@ -26,6 +26,8 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const [stats, setStats] = useState({});
   const [chart, setChart] = useState([]);
+  const firstName =
+    user?.name?.trim()?.split(" ")[0] || "User";
 
   useEffect(() => {
     api.get("/dashboard/stats").then(r => setStats(r.data)).catch(() => {});
@@ -33,13 +35,13 @@ export default function DashboardHome() {
   }, []);
 
   const items = (() => {
-    if (user.role === "student") return [
+    if (user?.role === "student") return [
       stat("Total entries", stats.total_days ?? 0, "days logged"),
       stat("Approved", stats.approved ?? 0, "entries"),
       stat("Pending", stats.pending ?? 0, "awaiting review"),
       stat("Verified visits", stats.visits ?? 0, "GPS confirmed"),
     ];
-    if (user.role === "supervisor") return [
+    if (user?.role === "supervisor") return [
       stat("Assigned students", stats.students ?? 0),
       stat("Upcoming visits", stats.upcoming_visits ?? 0),
       stat("Verified visits", stats.verified_visits ?? 0),
