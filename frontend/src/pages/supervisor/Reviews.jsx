@@ -37,10 +37,10 @@ export default function SupervisorReviews() {
   return (
     <div className="space-y-6" data-testid="supervisor-reviews">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Logbook Review</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">Logbook Review</h1>
         <p className="text-sm text-muted-foreground mt-1">Approve or reject student logbook entries.</p>
       </div>
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
         {students.map(s => (
           <button key={s.id} onClick={() => setSelected(s.id)}
             className={`px-3 py-1.5 rounded-md text-sm border ${selected === s.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}
@@ -50,7 +50,7 @@ export default function SupervisorReviews() {
         ))}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {logs.length === 0 && (
           <div className="rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground text-center">
             No entries for this student yet.
@@ -58,7 +58,7 @@ export default function SupervisorReviews() {
         )}
         {logs.map(l => (
           <div key={l.id} className="rounded-xl border border-border bg-card p-5" data-testid={`review-log-${l.id}`}>
-            <div className="flex justify-between items-start flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div>
                 <div className="font-semibold">{new Date(l.date).toLocaleDateString()}</div>
                 <div className="text-xs text-muted-foreground">{l.hours}h · {l.skills || "—"}</div>
@@ -68,15 +68,15 @@ export default function SupervisorReviews() {
             <p className="mt-3 text-sm whitespace-pre-wrap">{l.activities}</p>
             {l.image_url && (
               <img src={l.image_url.startsWith("http") ? l.image_url : `${process.env.REACT_APP_BACKEND_URL}${l.image_url}`}
-                alt="logbook" className="mt-3 rounded-md max-h-64 border border-border object-cover" />
+                alt="logbook" className="mt-3 w-full rounded-lg border border-border object-cover max-h-72" />
             )}
             {l.challenges && <p className="mt-2 text-xs italic text-muted-foreground">Challenge: {l.challenges}</p>}
             {l.status === "pending" && (
               <div className="mt-4 space-y-2">
                 <Textarea rows={2} placeholder="Optional comment" value={comment[l.id] || ""}
                   onChange={e => setComment({ ...comment, [l.id]: e.target.value })} />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => review(l.id, "approved")} data-testid={`approve-${l.id}`}>Approve</Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button size="sm" className="w-full sm:w-auto" onClick={() => review(l.id, "approved")} data-testid={`approve-${l.id}`}>Approve</Button>
                   <Button size="sm" variant="destructive" onClick={() => review(l.id, "rejected")} data-testid={`reject-${l.id}`}>Reject</Button>
                 </div>
               </div>

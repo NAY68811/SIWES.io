@@ -78,19 +78,19 @@ export default function DashboardLayout() {
   const doLogout = async () => { await logout(); nav("/login"); };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background">
+    <div className="min-h-screen flex overflow-x-hidden bg-background">
       {/* Sidebar */}
       <aside
         className={`
-          ${open ? "block" : "hidden"}
-          lg:block
-          fixed inset-y-0 left-0
-          z-40
-          w-72
-          h-screen
-          flex flex-col
-          border-r border-border
-          bg-card
+        fixed inset-y-0 left-0 z-40
+        w-64 lg:w-72
+        h-screen
+        border-r border-border
+        bg-card
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0
+        flex flex-col
         `}
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-border">
@@ -139,7 +139,7 @@ export default function DashboardLayout() {
 
             <button
               onClick={doLogout}
-              className="p-2 rounded-md hover:bg-accent"
+              className="lg:hidden p-2 rounded-md hover:bg-accent"
             >
               <SignOut size={16} />
             </button>
@@ -148,8 +148,19 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 ml-72">
-        <header className="h-16 border-b border-border glass sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
+      <div
+        className="
+          flex-1
+          flex
+          flex-col
+          min-w-0
+          lg:ml-72
+          ml-0
+          transition-all
+          duration-300
+        "
+      >
+        <header className="sticky top-0 z-30 h-16 border-b border-border glass flex items-center justify-between px-3 sm:px-4 lg:px-8">
           <div className="flex items-center gap-3">
             <button className="lg:hidden p-2" onClick={() => setOpen(true)} data-testid="mobile-menu"><List /></button>
             <div>
@@ -168,7 +179,7 @@ export default function DashboardLayout() {
             <Link to="/app/profile"><Button variant="outline" size="sm" data-testid="nav-profile">Profile</Button></Link>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto h-screen p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-8">
           <Outlet />
         </main>
       </div>

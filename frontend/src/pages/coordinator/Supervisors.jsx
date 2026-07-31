@@ -82,16 +82,16 @@ export default function CoordSupervisors() {
 
   return (
     <div className="space-y-6" data-testid="coord-supervisors">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Supervisors</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">Supervisors</h1>
           <p className="text-sm text-muted-foreground mt-1">Create and manage supervisor accounts.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openNew} data-testid="new-supervisor">+ New supervisor</Button>
+            <Button onClick={openNew} className="w-full sm:w-auto" data-testid="new-supervisor">+ New supervisor</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit supervisor" : "Create supervisor"}</DialogTitle>
               <DialogDescription>
@@ -101,7 +101,7 @@ export default function CoordSupervisors() {
             <form onSubmit={submit} className="space-y-3" data-testid="supervisor-form">
               <div><Label>Name</Label><Input required value={form.name} onChange={upd("name")} data-testid="sup-name" /></div>
               <div><Label>Email</Label><Input required type="email" disabled={!!editing} value={form.email} onChange={upd("email")} data-testid="sup-email" /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Staff ID</Label><Input value={form.staff_id} onChange={upd("staff_id")} data-testid="sup-staff" /></div>
                 <div><Label>Phone</Label><Input value={form.phone} onChange={upd("phone")} data-testid="sup-phone" /></div>
               </div>

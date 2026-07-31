@@ -8,11 +8,11 @@ import { Star } from "@phosphor-icons/react";
 
 function Stars({ value, onChange, testid }) {
   return (
-    <div className="flex gap-1" data-testid={testid}>
+    <div className="flex flex-wrap gap-1" data-testid={testid}>
       {[1,2,3,4,5].map(n => (
         <button key={n} type="button" onClick={() => onChange(n)}
           className={n <= value ? "text-amber-400" : "text-muted-foreground/40"}>
-          <Star size={22} weight={n <= value ? "fill" : "regular"} />
+          <Star size={20} weight={n <= value ? "fill" : "regular"} />
         </button>
       ))}
     </div>
@@ -55,16 +55,16 @@ export default function SupervisorAssessments() {
   };
 
   return (
-    <div className="space-y-6" data-testid="supervisor-assessments">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0" data-testid="supervisor-assessments">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Student Assessment</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">Student Assessment</h1>
         <p className="text-sm text-muted-foreground mt-1">End-of-SIWES performance evaluation. Students see submitted assessments.</p>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         {students.map(s => (
           <button key={s.id} onClick={() => setSelected(s.id)}
-            className={`px-3 py-1.5 rounded-md text-sm border ${selected === s.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}
+            className={`flex-1 min-w-[140px] sm:flex-none px-3 py-2 rounded-md text-sm border transition-all ${selected === s.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}
             data-testid={`assess-tab-${s.id}`}>
             {s.name}
           </button>
@@ -72,21 +72,21 @@ export default function SupervisorAssessments() {
       </div>
 
       {selected && (
-        <form onSubmit={submit} className="max-w-2xl rounded-xl border border-border bg-card p-6 space-y-5">
+        <form onSubmit={submit} className="w-full max-w-3xl rounded-xl border border-border bg-card p-4 sm:p-6 space-y-5">
           <div>
             <Label>Overall rating</Label>
             <Stars value={form.rating} onChange={v => setForm(f => ({ ...f, rating: v }))} testid="stars-rating" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div><Label>Punctuality</Label><Stars value={form.punctuality} onChange={v => setForm(f => ({ ...f, punctuality: v }))} testid="stars-punctuality" /></div>
             <div><Label>Teamwork</Label><Stars value={form.teamwork} onChange={v => setForm(f => ({ ...f, teamwork: v }))} testid="stars-teamwork" /></div>
             <div><Label>Technical skill</Label><Stars value={form.technical_skill} onChange={v => setForm(f => ({ ...f, technical_skill: v }))} testid="stars-tech" /></div>
           </div>
           <div>
             <Label>Feedback</Label>
-            <Textarea rows={4} value={form.feedback} onChange={(e) => setForm(f => ({ ...f, feedback: e.target.value }))} data-testid="assess-feedback" />
+            <Textarea rows={5} value={form.feedback} onChange={(e) => setForm(f => ({ ...f, feedback: e.target.value }))} data-testid="assess-feedback" />
           </div>
-          <Button type="submit" data-testid="assess-submit">{existing ? "Update assessment" : "Submit assessment"}</Button>
+          <Button type="submit" className="w-full sm:w-auto" data-testid="assess-submit">{existing ? "Update assessment" : "Submit assessment"}</Button>
         </form>
       )}
     </div>

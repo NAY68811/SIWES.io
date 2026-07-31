@@ -9,14 +9,14 @@ const stat = (label, value, sub) => ({ label, value, sub });
 
 function StatCard({ label, value, sub, testid }) {
   return (
-    <div className="stat-card rounded-xl border border-border bg-card p-5" data-testid={testid}
+    <div className="stat-card rounded-xl border border-border bg-card p-3 sm:p-5" data-testid={testid}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         e.currentTarget.style.setProperty("--x", `${e.clientX - r.left}px`);
         e.currentTarget.style.setProperty("--y", `${e.clientY - r.top}px`);
       }}>
       <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="text-3xl font-extrabold mt-2 tracking-tight">{value}</div>
+      <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold mt-2 tracking-tight break-words">{value}</div>
       {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
     </div>
   );
@@ -54,28 +54,45 @@ export default function DashboardHome() {
   })();
 
   return (
-    <div className="space-y-6" data-testid="dashboard-home">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0" data-testid="dashboard-home">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Welcome, {(user.name || "").split(" ").filter(w => !/^(Dr\.?|Mr\.?|Mrs\.?|Ms\.?|Engr\.?|Prof\.?)$/i.test(w))[0] || user.name}.</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+          Welcome back,
+          <br className="sm:hidden" />
+          <span className="text-primary">
+              {" "}
+              {firstName}
+          </span>
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">Here's what's happening across your SIWES workspace.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {items.map((s, i) => <StatCard key={s.label} {...s} testid={`stat-${i}`} />)}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
             <h3 className="text-lg font-bold">Logbook activity</h3>
             <span className="text-xs text-muted-foreground">last 8 weeks</span>
           </div>
-          <div className="h-64" style={{ minHeight: 240 }}>
+          <div className="h-56 sm:h-64 w-full overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chart.length ? chart : [{week: "—", entries: 0}]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                <XAxis
+                  dataKey="week"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={10}
+                />
+
+                <YAxis
+                  allowDecimals={false}
+                  width={30}
+                  tick={{ fontSize: 10 }}
+                />
+                
                 <Tooltip
                   contentStyle={{
                     background: "hsl(var(--card))",
@@ -88,7 +105,7 @@ export default function DashboardHome() {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 lg:p-6 space-y-4">
           <h3 className="text-lg font-bold">Quick tips</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {user.role === "student" && "Register your company from ‘My Company’, then submit a daily logbook entry. Your supervisor will review it."}

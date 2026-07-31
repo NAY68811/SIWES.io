@@ -18,9 +18,9 @@ export default function CoordStudents() {
   const filtered = students.filter(s => (s.name + s.email + (s.matric_no || "")).toLowerCase().includes(q.toLowerCase()));
   return (
     <div className="space-y-6" data-testid="coord-students">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Students</h1>
-        <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" data-testid="students-search" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">Students</h1>
+        <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:max-w-xs" data-testid="students-search" />
       </div>
       <div className="rounded-xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">

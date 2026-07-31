@@ -52,7 +52,12 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Toaster position="top-right" richColors />
+          <Toaster
+            richColors
+            position="top-right"
+            expand
+            closeButton
+          />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

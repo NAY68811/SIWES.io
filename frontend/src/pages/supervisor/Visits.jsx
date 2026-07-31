@@ -56,19 +56,19 @@ export default function SupervisorVisits() {
   const company = activeStudent?.company;
 
   return (
-    <div className="space-y-6" data-testid="supervisor-visits">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0" data-testid="supervisor-visits">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Visits & GPS verification</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">Visits & GPS verification</h1>
         <p className="text-sm text-muted-foreground mt-1">Schedule visits and confirm your physical presence at the student&rsquo;s SIWES site.</p>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
-        <form onSubmit={schedule} className="lg:col-span-2 rounded-xl border border-border bg-card p-6 space-y-3 h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+        <form onSubmit={schedule} className="lg:col-span-2 rounded-xl border border-border bg-card p-4 sm:p-6 space-y-4 h-fit">
           <h3 className="font-bold text-lg">Schedule a visit</h3>
           <div>
             <Label>Student</Label>
             <Select value={selected} onValueChange={setSelected}>
-              <SelectTrigger data-testid="visit-student"><SelectValue placeholder="Select student" /></SelectTrigger>
+              <SelectTrigger className="w-full" data-testid="visit-student"><SelectValue placeholder="Select student" /></SelectTrigger>
               <SelectContent>
                 {students.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
@@ -79,12 +79,12 @@ export default function SupervisorVisits() {
             <Input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} data-testid="visit-date" />
           </div>
           <div><Label>Note</Label><Textarea rows={2} value={note} onChange={e => setNote(e.target.value)} /></div>
-          <Button type="submit" disabled={!selected} data-testid="visit-schedule">Schedule visit</Button>
+          <Button type="submit" className="w-full sm:w-auto" disabled={!selected} data-testid="visit-schedule">Schedule visit</Button>
         </form>
 
         <div className="lg:col-span-3">
           {company ? (
-            <LeafletMap marker={[company.latitude, company.longitude]} radiusMeters={150} height={340} />
+            <LeafletMap marker={[company.latitude, company.longitude]} radiusMeters={150} height={window.innerWidth < 640 ? 260 : 340} />
           ) : (
             <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground h-full grid place-content-center">
               <MapPin size={28} className="mx-auto mb-2" />
@@ -101,19 +101,19 @@ export default function SupervisorVisits() {
           {visits.map(v => {
             const s = students.find(x => x.id === v.student_id);
             return (
-              <div key={v.id} className="p-4 flex flex-wrap items-center justify-between gap-3" data-testid={`visit-row-${v.id}`}>
+              <div key={v.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-testid={`visit-row-${v.id}`}>
                 <div>
-                  <div className="font-semibold">{s?.name || "Student"} · {v.scheduled_date}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="font-semibold break-words">{s?.name || "Student"} · {v.scheduled_date}</div>
+                  <div className="text-xs text-muted-foreground break-words">
                     {v.note || "—"} {v.distance_m ? `· ${v.distance_m}m from site` : ""}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   <Badge variant={v.status === "verified" ? "default" : v.status === "failed" ? "destructive" : "secondary"}>
                     {v.status}
                   </Badge>
                   {v.status === "scheduled" && (
-                    <Button size="sm" onClick={() => verify(v)} disabled={busyId === v.id} data-testid={`visit-verify-${v.id}`}>
+                    <Button size="sm" className="w-full sm:w-auto" onClick={() => verify(v)} disabled={busyId === v.id} data-testid={`visit-verify-${v.id}`}>
                       {busyId === v.id ? "Verifying…" : "Start visit & verify"}
                     </Button>
                   )}

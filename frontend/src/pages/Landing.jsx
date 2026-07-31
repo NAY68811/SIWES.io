@@ -16,10 +16,10 @@ const FEATURES = [
 export default function Landing() {
   const { theme, toggle } = useTheme();
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Navbar */}
       <header className="sticky top-0 z-50 glass border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2" data-testid="brand-logo">
             <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-black">S</div>
             <span className="font-extrabold text-lg tracking-tight">SIWES<span className="text-primary">.io</span></span>
@@ -29,7 +29,7 @@ export default function Landing() {
             <a href="#roles" className="hover:text-primary">Roles</a>
             <a href="#how" className="hover:text-primary">How it works</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={toggle} className="h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent" data-testid="theme-toggle" aria-label="Toggle theme">
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -40,7 +40,7 @@ export default function Landing() {
       </header>
 
       {/* Hero — Bento */}
-      <section className="max-w-7xl mx-auto px-6 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
         <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
         <div className="lg:col-span-7 relative">
           <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground mb-6">
@@ -56,20 +56,20 @@ export default function Landing() {
             from company approval and supervisor allocation to GPS-verified
             visits and daily digital logbooks.
           </p>
-          <div className="mt-8 flex items-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <Link to="/register"><Button size="lg" className="rounded-full px-6" data-testid="hero-get-started">Start free <ArrowRight size={18} className="ml-2" /></Button></Link>
             <Link to="/login"><Button variant="outline" size="lg" className="rounded-full px-6" data-testid="hero-signin">I have an account</Button></Link>
           </div>
-          <div className="mt-10 grid grid-cols-3 max-w-md text-sm">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-md text-sm">
             <div><div className="text-2xl font-bold">150m</div><div className="text-muted-foreground">GPS radius</div></div>
             <div><div className="text-2xl font-bold">4</div><div className="text-muted-foreground">User roles</div></div>
             <div><div className="text-2xl font-bold">24/7</div><div className="text-muted-foreground">Live tracking</div></div>
           </div>
         </div>
         <div className="lg:col-span-5 relative">
-          <div className="grid grid-cols-6 grid-rows-6 gap-3 h-full min-h-[440px]">
+          <div className="grid grid-cols-6 grid-rows-6 gap-3 min-h-[320px] sm:min-h-[440px]">
             <div className="col-span-6 row-span-4 rounded-xl overflow-hidden border border-border">
-              <img src="https://images.pexels.com/photos/30954662/pexels-photo-30954662.jpeg" alt="GPS on dashboard" className="h-full w-full object-cover" />
+              <img loading="lazy" src="https://images.pexels.com/photos/30954662/pexels-photo-30954662.jpeg" alt="GPS on dashboard" className="h-full w-full object-cover" />
             </div>
             <div className="col-span-3 row-span-2 rounded-xl border border-border p-4 bg-card">
               <div className="text-xs text-muted-foreground">Visits today</div>
@@ -104,7 +104,7 @@ export default function Landing() {
 
       {/* Roles */}
       <section id="roles" className="max-w-7xl mx-auto px-6 py-20 border-t border-border grid lg:grid-cols-2 gap-12 items-center">
-        <img src="https://images.pexels.com/photos/8199160/pexels-photo-8199160.jpeg" alt="students" className="rounded-xl border border-border object-cover w-full h-96" />
+        <img loading="lazy" src="https://images.pexels.com/photos/8199160/pexels-photo-8199160.jpeg" alt="students" className="rounded-xl border border-border object-cover w-full h-64 sm:h-80 lg:h-96" />
         <div>
           <div className="text-xs uppercase tracking-widest text-primary mb-3">One platform, four roles</div>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-6">Built for the entire SIWES workflow.</h2>
@@ -124,12 +124,12 @@ export default function Landing() {
 
       {/* CTA */}
       <section id="how" className="max-w-7xl mx-auto px-6 py-20 border-t border-border">
-        <div className="rounded-2xl border border-border p-10 lg:p-14 bg-card flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div className="rounded-2xl border border-border p-10 lg:p-14 bg-card flex flex-col lg:flex-row items-center lg:items-center text-center lg:text-left">
           <div>
             <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Ready to modernize your SIWES office?</h3>
             <p className="mt-2 text-muted-foreground">Set up in minutes. Create an account or login to get Started</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <Link to="/register"><Button size="lg" className="rounded-full px-6" data-testid="cta-register">Create account</Button></Link>
             <Link to="/login"><Button size="lg" variant="outline" className="rounded-full px-6" data-testid="cta-login">Login</Button></Link>
           </div>
@@ -137,7 +137,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-sm text-muted-foreground flex flex-wrap justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-sm text-muted-foreground flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
           <div>© {new Date().getFullYear()} SIWES.io - Built for academic use.</div>
         </div>
       </footer>
