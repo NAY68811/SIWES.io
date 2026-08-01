@@ -9,7 +9,7 @@ const stat = (label, value, sub) => ({ label, value, sub });
 
 function StatCard({ label, value, sub, testid }) {
   return (
-    <div className="stat-card rounded-xl border border-border bg-card p-3 sm:p-5" data-testid={testid}
+    <div className="stat-card rounded-xl border border-border bg-card p-4 min-h-[120px] flex flex-col justify-between" data-testid={testid}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         e.currentTarget.style.setProperty("--x", `${e.clientX - r.left}px`);
@@ -69,7 +69,7 @@ export default function DashboardHome() {
         <p className="text-muted-foreground mt-1 text-sm">Here's what's happening across your SIWES workspace.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {items.map((s, i) => <StatCard key={s.label} {...s} testid={`stat-${i}`} />)}
       </div>
 

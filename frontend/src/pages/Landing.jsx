@@ -19,7 +19,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Navbar */}
       <header className="sticky top-0 z-50 glass border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2" data-testid="brand-logo">
             <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center font-black">S</div>
             <span className="font-extrabold text-lg tracking-tight">SIWES<span className="text-primary">.io</span></span>
@@ -29,7 +29,7 @@ export default function Landing() {
             <a href="#roles" className="hover:text-primary">Roles</a>
             <a href="#how" className="hover:text-primary">How it works</a>
           </nav>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button onClick={toggle} className="h-9 w-9 grid place-items-center rounded-md border border-border hover:bg-accent" data-testid="theme-toggle" aria-label="Toggle theme">
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -42,7 +42,7 @@ export default function Landing() {
       {/* Hero — Bento */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
         <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
-        <div className="lg:col-span-7 relative">
+        <div className="lg:col-span-8 relative">
           <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground mb-6">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             Live GPS verification · Digital logbook · v1.0
@@ -60,13 +60,13 @@ export default function Landing() {
             <Link to="/register"><Button size="lg" className="rounded-full px-6" data-testid="hero-get-started">Start free <ArrowRight size={18} className="ml-2" /></Button></Link>
             <Link to="/login"><Button variant="outline" size="lg" className="rounded-full px-6" data-testid="hero-signin">I have an account</Button></Link>
           </div>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-md text-sm">
+          <div className="mt-10 grid grid-cols-3 gap-4 max-w-md text-center text-sm">
             <div><div className="text-2xl font-bold">150m</div><div className="text-muted-foreground">GPS radius</div></div>
             <div><div className="text-2xl font-bold">4</div><div className="text-muted-foreground">User roles</div></div>
             <div><div className="text-2xl font-bold">24/7</div><div className="text-muted-foreground">Live tracking</div></div>
           </div>
         </div>
-        <div className="lg:col-span-5 relative">
+        <div className="lg:col-span-4 relative">
           <div className="grid grid-cols-6 grid-rows-6 gap-3 min-h-[320px] sm:min-h-[440px]">
             <div className="col-span-6 row-span-4 rounded-xl overflow-hidden border border-border">
               <img loading="lazy" src="https://images.pexels.com/photos/30954662/pexels-photo-30954662.jpeg" alt="GPS on dashboard" className="h-full w-full object-cover" />

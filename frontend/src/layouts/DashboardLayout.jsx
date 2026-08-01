@@ -100,7 +100,7 @@ export default function DashboardLayout() {
           </Link>
           <button className="lg:hidden" onClick={() => setOpen(false)}><X /></button>
         </div>
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 pb-32 space-y-1">
           {links.map(({ to, icon: Icon, label, end }) => (
             <NavLink key={to} to={to} end={end}
               onClick={() => setOpen(false)}
