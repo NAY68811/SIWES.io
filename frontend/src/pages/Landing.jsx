@@ -8,7 +8,7 @@ const FEATURES = [
   { icon: MapPin, title: "GPS Visit Verification", body: "Supervisors' physical presence is verified against the student's approved SIWES site within a configurable radius." },
   { icon: ClipboardText, title: "Digital Logbook", body: "Daily activities, hours, skills learned and challenges - with image uploads and one-click supervisor approvals." },
   { icon: Compass, title: "Smart Allocation", body: "Automatic supervisor-to-student matching by department, workload balancing and manual override." },
-  { icon: ShieldCheck, title: "Role-based Access", body: "Four distinct roles - Student, Supervisor, Coordinator and Admin — each with a tailored dashboard." },
+  { icon: ShieldCheck, title: "Role-based Access", body: "Four distinct roles - Student, Supervisor, Coordinator and Admin each with a dashboard." },
   { icon: GraduationCap, title: "Company Approval", body: "Coordinators approve student placement companies before SIWES starts, with map-verified coordinates." },
   { icon: ChartBar, title: "Reports & Analytics", body: "Live dashboards for attendance, visit outcomes and departmental performance summaries." },
 ];
