@@ -15,7 +15,7 @@ function navFor(role) {
   const base = [{ to: "/app", icon: House, label: "Dashboard", end: true }];
   const rest = {
     student: [
-      { to: "/app/company", icon: Buildings, label: "My Company" },
+      { to: "/app/company", icon: Buildings, label: "My Placement" },
       { to: "/app/logbook", icon: Notepad, label: "Logbook" },
       { to: "/app/my-supervisor", icon: UserCircle, label: "My Supervisor" },
     ],

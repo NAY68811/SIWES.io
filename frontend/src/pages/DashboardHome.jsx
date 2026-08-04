@@ -110,7 +110,7 @@ export default function DashboardHome() {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5 lg:p-6 space-y-4">
           <h3 className="text-lg font-bold">Quick tips</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {user.role === "student" && "Register your company from ‘My Company’, then submit a daily logbook entry. Your supervisor will review it."}
+            {user.role === "student" && "Register your placement from ‘My Placement’, then submit a daily logbook entry. Your supervisor will review it."}
             {user.role === "supervisor" && "Open ‘Visits & GPS’ to schedule a physical visit and verify your location within 150m of the student’s approved company."}
             {(user.role === "coordinator" || user.role === "admin") && "Use ‘Allocations’ to auto-assign supervisors or manually reassign students. Approve companies from the Companies tab."}
           </p>

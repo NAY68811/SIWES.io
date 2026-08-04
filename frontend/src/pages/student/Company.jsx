@@ -51,7 +51,7 @@ export default function StudentCompany() {
     <div className="space-y-6" data-testid="student-company">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">My Company</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">My Placement</h1>
           <p className="text-sm text-muted-foreground mt-1">Register or update your SIWES placement details.</p>
         </div>
         {company && (
