@@ -95,7 +95,7 @@ export default function CoordSupervisors() {
             <DialogHeader>
               <DialogTitle>{editing ? "Edit supervisor" : "Create supervisor"}</DialogTitle>
               <DialogDescription>
-                {editing ? "Update supervisor details." : "A temporary password is generated. Share it with the supervisor — they'll be forced to change it on first login."}
+                {editing ? "Update supervisor details." : "A temporary password is generated. Share it with the supervisor and they'll be forced to change it on first login."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-3" data-testid="supervisor-form">

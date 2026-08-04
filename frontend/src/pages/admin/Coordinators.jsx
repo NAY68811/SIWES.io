@@ -47,7 +47,7 @@ export default function AdminCoordinators() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create coordinator</DialogTitle>
-              <DialogDescription>A temporary password is generated. Share it with the coordinator — they'll be forced to change it on first login.</DialogDescription>
+              <DialogDescription>A temporary password is generated. Share it with the coordinator and they'll be forced to change it on first login.</DialogDescription>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-3">
               <div><Label>Name</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="coord-name" /></div>
