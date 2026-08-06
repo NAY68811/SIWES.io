@@ -520,16 +520,95 @@ async def create_user(body: AdminCreateUserIn,
             "temporary_password": temp_password,
             "email_sent": email_sent}
 
+from io import BytesIO
+import secrets
+
 @api.post("/users/import-students")
 async def import_students(
     file: UploadFile = File(...),
     user: dict = Depends(require_roles("coordinator", "admin")),
 ):
+    workbook = load_workbook(BytesIO(await file.read()))
+    sheet = workbook.active
+
+    created = 0
+    failed = 0
+    errors = []
+
+    for row_no, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+
+        name, email, matric_no, level, phone, department = row
+
+        if not email:
+            failed += 1
+            errors.append({
+                "row": row_no,
+                "message": "Email is required"
+            })
+            continue
+
+        email = str(email).lower().strip()
+
+        if await db.users.find_one({"email": email}):
+            failed += 1
+            errors.append({
+                "row": row_no,
+                "message": "Email already exists"
+            })
+            continue
+
+        if matric_no and await db.users.find_one({"matric_no": matric_no}):
+            failed += 1
+            errors.append({
+                "row": row_no,
+                "message": "Matric number already exists"
+            })
+            continue
+
+        dept = None
+
+        if department:
+            dept = await db.departments.find_one({
+                "name": str(department).strip()
+            })
+
+            if not dept:
+                failed += 1
+                errors.append({
+                    "row": row_no,
+                    "message": f"Department '{department}' not found"
+                })
+                continue
+
+        temp_password = f"Temp@{secrets.token_hex(4)}"
+
+        doc = {
+            "email": email,
+            "password_hash": hash_password(temp_password),
+            "name": name,
+            "role": "student",
+            "phone": phone,
+            "matric_no": matric_no,
+            "level": str(level),
+            "must_change_password": True,
+            "created_at": iso(now_utc())
+        }
+
+        if dept:
+            doc["department_id"] = dept["_id"]
+
+        await db.users.insert_one(doc)
+
+        created += 1
+
     return {
-        "filename": file.filename,
-        "message": "Endpoint is working."
+        "created": created,
+        "failed": failed,
+        "errors": errors
     }
 
+
+    
 @api.put("/users/{uid}")
 async def edit_user(uid: str, body: dict,
                     user: dict = Depends(require_roles("coordinator", "admin"))):
