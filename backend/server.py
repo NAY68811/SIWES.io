@@ -481,9 +481,9 @@ async def create_user(body: AdminCreateUserIn,
         raise HTTPException(400, "Email already exists")
     
     if body.role == "student" and body.matric_no:
-    if await db.users.find_one({"matric_no": body.matric_no}):
-        raise HTTPException(400, "Matric number already exists")
-        
+        if await db.users.find_one({"matric_no": body.matric_no}):
+            raise HTTPException(400, "Matric number already exists")
+
     temp_password = f"Temp@{secrets.token_hex(4)}"
     doc = {
         "email": email,
