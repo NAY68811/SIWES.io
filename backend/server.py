@@ -535,6 +535,8 @@ async def import_students(
     failed = 0
     errors = []
 
+    credentials = []
+
     for row_no, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
 
         name, email, matric_no, level, phone, department = row
@@ -599,16 +601,25 @@ async def import_students(
 
         await db.users.insert_one(doc)
 
+        credentials.append({
+            "name": name,
+            "email": email,
+            "password": temp_password
+        })
+
         created += 1
+
+        
 
     return {
         "created": created,
         "failed": failed,
-        "errors": errors
+        "errors": errors,
+        "credentials": credentials
     }
 
 
-    
+
 @api.put("/users/{uid}")
 async def edit_user(uid: str, body: dict,
                     user: dict = Depends(require_roles("coordinator", "admin"))):

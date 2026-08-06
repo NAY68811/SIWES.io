@@ -70,6 +70,43 @@ export default function CoordStudents() {
     setOpen(true);
   };
 
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await api.post(
+        "/users/import-students",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      toast.success(
+        `Imported ${data.created} students successfully`
+      );
+
+      if (data.failed > 0) {
+        console.log(data.errors);
+        toast.error(`${data.failed} student(s) could not be imported`);
+      }
+
+      load();
+
+    } catch (err) {
+      toast.error(formatApiError(err.response?.data?.detail));
+    }
+
+    e.target.value = "";
+  };
+
   const submit = async (e) => {
     e.preventDefault();
 
@@ -287,14 +324,24 @@ export default function CoordStudents() {
             className="hidden"
           />
 
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            data-testid="upload-students"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Upload Excel
-          </Button>
+          <>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              id="excel-upload"
+              className="hidden"
+              onChange={handleExcelUpload}
+            />
+
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => document.getElementById("excel-upload").click()}
+              data-testid="upload-students"
+            >
+              Upload Excel
+            </Button>
+          </>
         </>
 
       </div>
