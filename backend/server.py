@@ -1206,6 +1206,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://10.119.120.196:3000",
         "http://172.27.223.196:3000",
+        "http://10.118.130.196:3000",
         "https://siwes-connect.netlify.app",
     ],
     allow_credentials=True,
