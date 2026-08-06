@@ -165,13 +165,21 @@ class RegisterIn(BaseModel):
     level: Optional[str] = None
 
 class AdminCreateUserIn(BaseModel):
-    """Coordinator creates supervisors; Admin creates coordinators/supervisors."""
+    """Coordinator/Admin creates users."""
+
     email: EmailStr
     name: str
     role: Role
+
     phone: Optional[str] = None
     staff_id: Optional[str] = None
+
+    # Student fields
+    matric_no: Optional[str] = None
+    level: Optional[str] = None
+
     department_id: Optional[str] = None
+    
 
 class ChangePasswordIn(BaseModel):
     current_password: str
@@ -441,9 +449,18 @@ async def delete_session(sid: str,
 # ---------- Users management ----------
 def _can_create_role(actor_role: str, target_role: str) -> bool:
     if actor_role == "admin":
-        return target_role in ("coordinator", "supervisor")
+        return target_role in (
+            "coordinator",
+            "supervisor",
+            "student",
+        )
+
     if actor_role == "coordinator":
-        return target_role == "supervisor"
+        return target_role in (
+            "supervisor",
+            "student",
+        )
+
     return False
 
 @api.get("/users")
@@ -462,15 +479,30 @@ async def create_user(body: AdminCreateUserIn,
     email = body.email.lower()
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Email already exists")
+    
+    if body.role == "student" and body.matric_no:
+    if await db.users.find_one({"matric_no": body.matric_no}):
+        raise HTTPException(400, "Matric number already exists")
+        
     temp_password = f"Temp@{secrets.token_hex(4)}"
     doc = {
         "email": email,
         "password_hash": hash_password(temp_password),
-        "name": body.name, "role": body.role,
-        "phone": body.phone, "staff_id": body.staff_id,
+
+        "name": body.name,
+        "role": body.role,
+
+        "phone": body.phone,
+        "staff_id": body.staff_id,
+
+        # Student fields
+        "matric_no": body.matric_no,
+        "level": body.level,
+
         "must_change_password": True,
         "created_at": iso(now_utc()),
     }
+
     if body.department_id:
         try: doc["department_id"] = ObjectId(body.department_id)
         except Exception: pass
