@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export default function CoordStudents() {
   const [saving, setSaving] = useState(false);
   const [depts, setDepts] = useState([]);
   const [tempCreds, setTempCreds] = useState(null);
+  const fileInputRef = useRef(null);
   const load = async () => {
   const [studentRes, deptRes] = await Promise.all([
     api.get("/users?role=student"),
@@ -67,6 +68,39 @@ export default function CoordStudents() {
     setForm(emptyForm);
     setTempCreds(null);
     setOpen(true);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+
+    setSaving(true);
+
+    try {
+      const payload = {
+        ...form,
+        role: "student",
+      };
+
+      const { data } = await api.post("/users", payload);
+
+      setTempCreds({
+        email: data.email,
+        password: data.temporary_password,
+        email_sent: data.email_sent,
+      });
+
+      toast.success(
+        data.email_sent
+          ? "Student created successfully."
+          : "Student created. Copy the temporary password."
+      );
+
+      load();
+    } catch (err) {
+      toast.error(formatApiError(err.response?.data?.detail));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filtered = students.filter(s => (s.name + s.email + (s.matric_no || "")).toLowerCase().includes(q.toLowerCase()));
@@ -118,7 +152,7 @@ export default function CoordStudents() {
               </DialogDescription>
             </DialogHeader>
 
-            <form className="space-y-3">
+            <form onSubmit={submit} className="space-y-3">
 
               <div>
                 <Label>Full Name</Label>
@@ -212,10 +246,30 @@ export default function CoordStudents() {
                 />
               </div>
 
+              {tempCreds && (
+                <div className="p-3 rounded-md bg-primary/10 border border-primary/30 text-sm">
+                  <div className="font-bold">
+                    {tempCreds.email_sent
+                      ? "Credentials emailed. Backup copy:"
+                      : "Temporary credentials:"}
+                  </div>
+
+                  <div>
+                    Email: <span className="font-mono">{tempCreds.email}</span>
+                  </div>
+
+                  <div>
+                    Password: <span className="font-mono">{tempCreds.password}</span>
+                  </div>
+                </div>
+              )}
               <DialogFooter>
 
-                <Button type="submit">
-                  Create Student
+                <Button
+                  type="submit"
+                  disabled={saving}
+                >
+                  {saving ? "Creating..." : "Create Student"}
                 </Button>
 
               </DialogFooter>
@@ -225,13 +279,23 @@ export default function CoordStudents() {
           </DialogContent>
         </Dialog>
 
-        <Button
-          variant="outline"
-          className="w-full sm:w-auto"
-          data-testid="upload-students"
-        >
-          Upload Excel
-        </Button>
+        <>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+          />
+
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            data-testid="upload-students"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Upload Excel
+          </Button>
+        </>
 
       </div>
 

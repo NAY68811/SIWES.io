@@ -23,6 +23,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from services.email_service import send_email, credentials_email_html
 from services import storage_service
+from openpyxl import load_workbook
 
 # ---------- Setup ----------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -518,6 +519,16 @@ async def create_user(body: AdminCreateUserIn,
     return {**serialize_user({**doc, "_id": r.inserted_id}),
             "temporary_password": temp_password,
             "email_sent": email_sent}
+
+@api.post("/users/import-students")
+async def import_students(
+    file: UploadFile = File(...),
+    user: dict = Depends(require_roles("coordinator", "admin")),
+):
+    return {
+        "filename": file.filename,
+        "message": "Endpoint is working."
+    }
 
 @api.put("/users/{uid}")
 async def edit_user(uid: str, body: dict,
