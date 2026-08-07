@@ -27,7 +27,7 @@ export default function StudentCompany() {
 
   const useMyLocation = () => {
     if (!navigator.geolocation) return toast.error("Geolocation not supported");
-    navigator.geolocation.getCurrentPosition(
+    navigator.geolocation.watchPosition(
       (pos) => setForm(f => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude })),
       () => toast.error("Could not read your location"),
       { enableHighAccuracy: true }

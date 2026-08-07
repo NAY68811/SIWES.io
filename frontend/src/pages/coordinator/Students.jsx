@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Label } from "@/components/ui/label";
+import * as XLSX from "xlsx";
 
 import {
   Dialog,
@@ -88,6 +89,24 @@ export default function CoordStudents() {
           },
         }
       );
+
+      // Download credentials automatically
+      if (data.credentials && data.credentials.length > 0) {
+        const worksheet = XLSX.utils.json_to_sheet(data.credentials);
+
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(
+          workbook,
+          worksheet,
+          "Student Credentials"
+        );
+
+        XLSX.writeFile(
+          workbook,
+          "Student_Credentials.xlsx"
+        );
+      }
 
       toast.success(
         `Imported ${data.created} students successfully`

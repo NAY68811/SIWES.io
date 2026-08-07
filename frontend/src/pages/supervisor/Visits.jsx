@@ -36,7 +36,7 @@ export default function SupervisorVisits() {
   const verify = (visit) => {
     if (!navigator.geolocation) return toast.error("Geolocation not supported");
     setBusyId(visit.id);
-    navigator.geolocation.getCurrentPosition(
+    navigator.geolocation.watchPosition(
       async (pos) => {
         try {
           const body = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy };
