@@ -59,6 +59,19 @@ export default function CoordStudents() {
       toast.success(`Reset. New password: ${data.new_password}`);
     } catch (err) { toast.error(formatApiError(err.response?.data?.detail)); }
   };
+
+  const remove = async (student) => {
+    if (!window.confirm(`Delete ${student.name}?`)) return;
+
+    try {
+      await api.delete(`/users/${student.id}`);
+      toast.success("Student deleted");
+      load();
+    } catch (err) {
+      toast.error(formatApiError(err.response?.data?.detail));
+    }
+  };
+
   const upd = (key) => (value) =>
     setForm((f) => ({
       ...f,
@@ -408,15 +421,23 @@ export default function CoordStudents() {
               </td>
 
               <td className="p-4 text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => reset(s.id)}
+                  >
+                    Reset Password
+                  </Button>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => reset(s.id)}
-                >
-                  Reset Password
-                </Button>
-
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => remove(s)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </td>
 
             </tr>

@@ -645,8 +645,8 @@ async def delete_user(uid: str, user: dict = Depends(require_roles("coordinator"
     target = await db.users.find_one({"_id": ObjectId(uid)})
     if not target:
         raise HTTPException(404, "User not found")
-    if user["role"] == "coordinator" and target["role"] != "supervisor":
-        raise HTTPException(403, "Coordinators can only delete supervisors")
+    if user["role"] == "coordinator" and target["role"] not in ("student", "supervisor"):
+        raise HTTPException(403, "Coordinators can only delete students or supervisors")
     if target["role"] == "admin":
         raise HTTPException(403, "Admin accounts cannot be deleted via API")
     await db.users.delete_one({"_id": target["_id"]})
